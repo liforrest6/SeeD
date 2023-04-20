@@ -1,0 +1,304 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+# Genotype data
+
+Steps:
+
+1.  Download data from CIMMYT
+    1.  downloaded from <https://data.cimmyt.org/dataset.xhtml?persistentId=hdl:11529/8702394>
+
+        4/5/2023
+
+    2.  Comes as VCF
+2.  filter for biallelic with vcftools
+3.  Load into R, process with `process_V4_genotypes.R`
+    1.  Get v2-v4 map (positions are v4 positions, IDs are the old v2 IDs
+    2.  Select a single genotype for each SEEDGWASID# (just use the first one (several have 2 DNA samples)
+    3.  Create K matrices
+    4.  Create CSV files of the genotypes (0/1/2)
+
+```{r}
+dna_names = read.csv('../../Phenotype_data/selected_genotypeIDs.csv',h=T)
+
+dna_to_tc_gid = as.data.frame(readxl::read_xlsx('../../Phenotype_data/Hearne_data/dataset/Blups_01.xlsx',sheet = 'DNA to TC GID'))
+
+# all dna_names$Sample are in the BLUPs data
+mean(dna_names$Sample %in% dna_to_tc_gid$`Sample ID`)
+```
+
+Notes:
+
+-   all GWAS_IDs from the sequencing data are in the `dna_to_tc_gid` sheet
+
+-   check TC GID: 286910. It has 2 SEEDGWAS_IDs. Are these the same?
+
+    -   Their genotypes are different, but they are almost the best match to each other in the dataset
+    -   should drop the TC GID for phenotype GWAS
+
+# Phenotype data
+
+```{r}
+blups = as.data.frame(readxl::read_xlsx('../../Phenotype_data/Hearne_data/dataset/Blups_01.xlsx',sheet = 'Blups01',col_types = c(rep('text',11),'numeric')))
+
+# remove TC GID: 286910 from above
+blups = subset(blups,`GID` != 286910)
+
+sum(dna_to_tc_gid$`TC GID` %in% blups$GID)
+sum(unique(blups$GID) %in% dna_to_tc_gid$`TC GID`)
+length(unique(blups$GID))
+```
+
+Notes:
+
+-   phenotype GWAS sample size is 3736
+
+Remove bad trial:
+
+-   data from nmzpo has an issue in m2011BCH (duplicated entries with different Y, so dropping this trait here)
+
+```{r}
+blups = subset(blups,!(Experimento == 'm2011BCH' & Variable == 'nmzpo'))
+```
+
+Make into wide data
+
+```{r}
+library(tidyr)
+blups_wide = as.data.frame(pivot_wider(blups,names_from = 'Variable',values_from = 'Y'))
+blups_wide$SampleID = dna_to_tc_gid$`Sample ID`[match(blups_wide$GID,dna_to_tc_gid$`TC GID`)]
+blups_wide$Tester =  dna_to_tc_gid$Tester[match(blups_wide$GID,dna_to_tc_gid$`TC GID`)]
+```
+
+Collect trial info:
+
+```{r}
+library(readxl)
+Classification = read.csv('../../Phenotype_data/Trial_classification.csv')
+type = as.data.frame(read_xlsx('../../Phenotype_data/Hearne_data/dataset/Blups_01.xlsx',sheet = 'Trials'))
+Trait_info = as.data.frame(read_xlsx('../../Phenotype_data/Hearne_data/dataset/Blups_01.xlsx',sheet = 'Traits'))
+management = as.data.frame(read_xlsx('../../Phenotype_data/Hearne_data/dataset/Blups_01.xlsx',sheet = 'Management'))
+cycles = as.data.frame(read_xlsx('../../Phenotype_data/Hearne_data/dataset/Blups_01.xlsx',sheet = 'Cycle'))
+location = read.csv('../../Phenotype_data/Table_S14_TrialLatLongTable.csv')
+location$X = trimws(location$X)
+location$Hearne_name = trimws(location$Hearne_name)
+
+
+trials = unique(blups_wide[,1:9])
+trials$Manegement = management$English[match(trials$Manejo,management$Code)]
+trials$Cycle = cycles$English[match(trials$Ciclo,cycles$Code)]
+trials$Type1 = type$English[match(trials$Proposito1,type$Code)]
+trials$Type2 = type$English[match(trials$Proposito2,type$Code)]
+trials$Classification = Classification$Class[match(trials$Experimento,Classification$Experimento)]
+trials = trials[order(trials$Classification,trials$Localidad,trials$Año),]
+trials$Trial_elevation = location$Altitude..m.[match(trials$Localidad,trimws(location$Hearne_name))]
+trials$Trial_latitude = location$latitude[match(trials$Localidad,trimws(location$Hearne_name))]
+trials$Trial_longitude = location$longitude[match(trials$Localidad,trimws(location$Hearne_name))]
+
+
+traits = c('asi','dff','pcampo','pgrhah','polote','altpl','pgrha')
+traitNames = c('ASI','DaysToFlowering','FieldWeight','GrainWeightPerHectareCorrected','BareCobWeight','PlantHeight','GrainWeightPerHectare')
+for(trait in traits) {
+  trials[[traitNames[match(trait,traits)]]] = sapply(trials$Experimento,function(x) sum(!is.na(subset(subset(blups_wide,!is.na(SampleID)),Experimento == x)[[trait]])))
+}
+unique(blups$Variable) %in% gsub('.','',Trait_info$Variable,fixed=T)
+disease_traits = subset(Trait_info,Disease_trait == 'X')$Variable
+
+
+# This shows that either nearly all lines have disease scores or none
+disease_scores = c()
+mean_function = function(x) ifelse(sum(!is.na(x)) == 0,NA,mean(x,na.rm=T))
+for(i in 1:nrow(trials)) {
+  data = subset(blups_wide,Experimento == trials$Experimento[i])
+  data = subset(data,rowSums(!is.na(data[,traits]))>0)
+  disease_scores = rbind(disease_scores,data.frame(Experimento = trials$Experimento[i],t(apply(data[,disease_traits],2,mean_function))))
+}
+trials = merge(trials,disease_scores,by = 'Experimento')
+
+trials = trials[order(trials$Classification,trials$Localidad,trials$Año),]
+trials = subset(trials,Experimento != 'm2011BIG') # empty trial
+
+write.csv(trials[,-c(3,4,7,8,9)],file = '../../Phenotype_data/Trial_info.csv',row.names = F)
+
+```
+
+Process BLUPs
+
+```{r}
+blups_wide = subset(blups_wide,Experimento %in% trials$Experimento & !is.na(Tester))
+
+blups_wide = cbind(blups_wide[,c('Experimento','SampleID','Tester'),drop=F],
+                   Trial_Classification = trials$Classification[match(blups_wide$Experimento,trials$Experimento)],
+                       blups_wide[,traits]
+                  )
+colnames(blups_wide)[match(traits,colnames(blups_wide))] = traitNames
+
+# remove flowering data from "m2011BCH: G Victoria Tar spot" trial - Hearne says it wasn't good.
+blups_wide$ASI[blups_wide$Experimento == 'm2011BCH'] = NA
+blups_wide$DaysToFlowering[blups_wide$Experimento == 'm2011BCH'] = NA
+```
+
+-   remove trait:trial:tester with \< 20 lines/tester
+
+-   remove trials with \< 10 unique values
+
+-   remove trials with h2 (reliability?) \< 0.1
+
+    -   calculated as 1-\`Average blup variance\`/\`Genetic variance\`
+
+-   De-regress the BLUPs by dividing by h2. This makes the predictions of genetic values less accurate, but the effect sizes of the genetic values have appropriate scale (phenotype scale)
+
+    -   Note: here, BLUPs are just scaled phenotype values (mostly, only a single observation of each line per trial, but spatial effects are removed).
+
+-   convert to proportion of mean (CV) except for ASI
+
+```{r}
+
+H2s = as.data.frame(readxl::read_excel('../../Phenotype_data/Burgueno/MASAGRO-Maize-Data.xlsx',sheet=3))
+H2s$h2 = 1-H2s$`Average blup variance`/H2s$`Genetic variance`
+H2s$Experimento = blups_wide$Experimento[match(H2s$Experiment,toupper(blups_wide$Experimento))]
+H2s$TraitName = traitNames[match(H2s$Trait,traits)]
+H2s = subset(H2s,!is.na(Experimento) & TraitName %in% traitNames)
+
+
+blups_std = c()
+blups_deregressed = c()
+blups_deregressed_CV = c()
+
+for(trait in traitNames) {
+  for(trial in unique(blups_wide$Experimento)) {
+    blups_wide_trial = subset(blups_wide,Experimento == trial)
+    blups_wide_trial$y = blups_wide_trial[[trait]]
+    
+    # fix units
+    if(trait == 'FieldWeight' & trial=='m2012BBAEF') blups_wide_trial$y = 1000*blups_wide_trial$y
+    
+    blups_wide_trial = subset(blups_wide_trial,!is.na(y))
+    if(nrow(blups_wide_trial) == 0) next
+    tester_counts = table(blups_wide_trial$Tester)
+    # print(tester_counts)
+    # if(sum(tester_counts < 20)>0) next
+    tester_counts = tester_counts[tester_counts >= 20]
+    blups_wide_trial$y[blups_wide_trial$Tester %in% names(tester_counts) == F] = NA
+    
+    if(length(unique(blups_wide_trial$y))< 10) next
+    blups_wide_trial = subset(blups_wide_trial,!is.na(y))
+    
+    
+    blups_std = rbind(blups_std,data.frame(
+      blups_wide_trial[,1:4],
+      Trait = trait,
+      Value=blups_wide_trial$y
+    ))
+    
+    # deregress
+    trait_mean = mean(blups_wide_trial$y)
+    fit_testers = lm(y~Tester,blups_wide_trial)
+    h2 = H2s$h2[H2s$Experimento == trial & H2s$Trait == traits[match(trait,traitNames)]]
+    if(is.null(h2)) {
+      print(c(trial,trait))
+      h2 = 0
+    }
+    if(h2 < 0.1) next
+    blups_wide_trial$y = (resid(fit_testers))/h2 + fitted(fit_testers)
+
+    blups_deregressed = rbind(blups_deregressed,data.frame(
+      blups_wide_trial[,1:4],
+      Trait = trait,
+      Value=blups_wide_trial$y
+    ))
+
+    if(trait != 'ASI') {
+      blups_wide_trial$y = blups_wide_trial$y / trait_mean
+    }
+
+    blups_deregressed_CV = rbind(blups_deregressed_CV,data.frame(
+      blups_wide_trial[,1:4],
+      Trait = trait,
+      Value=blups_wide_trial$y
+    ))
+  }
+}
+
+
+write.csv(blups_std,file = '../../Phenotype_data/blups_std.csv',row.names=F)
+write.csv(blups_deregressed,file = '../../Phenotype_data/blups_deregressed.csv',row.names=F)
+write.csv(blups_deregressed_CV,file = '../../Phenotype_data/blups_deregressed_CV.csv',row.names=F)
+```
+
+Update trial_info
+
+```{r}
+trial_info = read.csv('../../Phenotype_data/Trial_info.csv')
+```
+
+# Environment data
+
+```{r}
+new_env_data = read_xlsx('../Downloaded_data/Passport/Maize climate data nov 2022 AEZ elevation by growing season and flowering period.xlsx')
+
+
+```
+
+```{r}
+length(unique(dna_to_tc_gid$`AccessionGID (Germplasm ID at CIMMYT; General_identifier in Germinate)`))
+
+new_env_data = read_xlsx('../Downloaded_data/Passport/Maize climate data nov 2022 AEZ elevation by growing season and flowering period.xlsx')
+germinate_data = fread('../Germinate_data/germinatebase_03f36416-945c-4fa7-bc2d-b62377de40d5.txt',data.table=F)
+
+length(unique(new_env_data$GID))
+sum(unique(new_env_data$GID) %in% dna_to_tc_gid$`AccessionGID (Germplasm ID at CIMMYT; General_identifier in Germinate)`)
+
+length(unique(germinate_data$general_identifier))
+sum(unique(germinate_data$general_identifier) %in% dna_to_tc_gid$`AccessionGID (Germplasm ID at CIMMYT; General_identifier in Germinate)`)
+mean(dna_to_tc_gid$`AccessionGID (Germplasm ID at CIMMYT; General_identifier in Germinate)` %in% unique(germinate_data$general_identifier))
+
+germinate_data_withLatLong = subset(germinate_data,!is.na(locations_latitude+locations_longitude))
+
+length(unique(germinate_data_withLatLong$general_identifier))
+sum(unique(germinate_data_withLatLong$general_identifier) %in% dna_to_tc_gid$`AccessionGID (Germplasm ID at CIMMYT; General_identifier in Germinate)`)
+mean(dna_to_tc_gid$`AccessionGID (Germplasm ID at CIMMYT; General_identifier in Germinate)` %in% unique(germinate_data_withLatLong$general_identifier))
+
+
+tc_info = fread('../prepped_data/TestCross_passport.csv',data.table=F)
+
+
+
+load('../eGWAS/WorldClimMat.Rimage')
+# remove outlier lat/long
+# one point with longitude missing a - sign. This got the wrong weather data pulled.
+# one point way out in the pacific - Hawaii, so OK
+finalMat = subset(finalMat,longitude < 50 & !is.na(SampleID))
+
+
+GIDs = unique(c(new_env_data$GID,germinate_data$general_identifier,tc_info$AccGID))
+
+lat_data = data.frame(GID = GIDs)
+lat_data$GWAS_ID = dna_to_tc_gid$`Sample ID`[match(lat_data$GID,dna_to_tc_gid$`AccessionGID (Germplasm ID at CIMMYT; General_identifier in Germinate)`)]
+lat_data$lat_new_env_data = new_env_data$LatNew[match(lat_data$GID,new_env_data$GID)]
+lat_data$lat_germinate = germinate_data$locations_latitude[match(lat_data$GID,germinate_data$general_identifier)]
+lat_data$lat_tc_info_by_GID = tc_info$latitude[match(lat_data$GID,tc_info$AccGID)]
+lat_data$long_tc_info_by_GID = tc_info$longitude[match(lat_data$GID,tc_info$AccGID)]
+# lat_data$lat_finalMat = finalMat$latitude[match(lat_data$GWAS_ID,finalMat$SampleID)]
+lat_data$locations_site_name = germinate_data$locations_site_name[match(lat_data$GID,germinate_data$general_identifier)]
+lat_data$locations_site_name[lat_data$locations_site_name==''] = NA
+
+lat_data$country = germinate_data$countries_country_name[match(lat_data$GID,germinate_data$general_identifier)]
+
+
+library(MASS)
+# i = !is.na(lat_data$lat_finalMat)
+# lat_data$fraction = NA
+# lat_data$fraction[i] = fractions(lat_data$lat_finalMat[i] - floor(lat_data$lat_finalMat[i]))
+finalMat$siteName = germinate_data$locations_site_name[match(finalMat$SampleID,germinate_data$`Sample ID of DNA from single plants used in GWAS`)]
+
+tc_info$siteName = germinate_data$locations_site_name[match(tc_info$AccGID,germinate_data$general_identifier)]
+tc_info$siteName[tc_info$siteName == ''] = NA
+
+```
+
+```{r}
+dna_to_tc_gid$lat = new_env_data$LatNew[match(dna_to_tc_gid$`AccessionGID (Germplasm ID at CIMMYT; General_identifier in Germinate)`,new_env_data$GID)]
+```

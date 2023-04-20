@@ -1,0 +1,34 @@
+---
+title: "R Notebook"
+output: html_notebook
+editor_options: 
+  chunk_output_type: inline
+---
+
+The goal is to predict the genetic effects of accession genetic values in new trials based on gene-performance associations in training trials.
+
+We will use each of the `GrainWeightPerHectare` trials as a separate test case.
+
+For each of these trials, we will use data from other trials **from different locations** as the training data.
+
+This script will set up the testing/training partitions.
+
+We will do this for both `GrainWeightPerHectareCorrected`, `GrainWeightPerHectare` and for `DaysToFlowering`. We will start with each of the
+
+For `DaysToFlowering` we will set up two training sets: 1) using the same training trials as for `GrainWeightPerHectare`, 2) using all other trials from different locations.
+
+For each trait and each test trial, this script will set up the training data in a common format.
+
+```{r}
+library(data.table)
+trial_info = read.csv('../../Phenotype_data/Trial_info.csv')
+blups_deregressed = fread('../../Phenotype_data/blups_deregressed.csv',data.table=F)
+```
+
+Create datasets for `GrainWeightPerHectare`
+
+```{r}
+blups = subset(blups_deregressed,Trait == 'GrainWeightPerHectareCorrected')
+trial_counts = table(blups$Experimento)
+trial_counts = data.frame(Experimento = names(trial_counts),n = trial_counts,Localidad = trial_info$Localidad[match(names(trial_counts),trial_info$Experimento)],Localidad = trial_info$Classification[match(names(trial_counts),trial_info$Experimento)])
+```
