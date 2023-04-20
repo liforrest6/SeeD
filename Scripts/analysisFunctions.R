@@ -5,4 +5,4 @@
 # Functions for running analyses
 ##########################################
 
-# source(here::here('config.R'))
+source(here::here('config.R'))
