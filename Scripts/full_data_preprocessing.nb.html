@@ -1775,98 +1775,202 @@ one (several have 2 DNA samples)</li>
 </ol>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZG5hX25hbWVzID0gcmVhZC5jc3YoJy4uLy4uL1BoZW5vdHlwZV9kYXRhL3NlbGVjdGVkX2dlbm90eXBlSURzLmNzdicsaD1UKVxuXG5kbmFfdG9fdGNfZ2lkID0gYXMuZGF0YS5mcmFtZShyZWFkeGw6OnJlYWRfeGxzeCgnLi4vLi4vUGhlbm90eXBlX2RhdGEvSGVhcm5lX2RhdGEvZGF0YXNldC9CbHVwc18wMS54bHN4JyxzaGVldCA9ICdETkEgdG8gVEMgR0lEJykpXG5gYGAifQ== -->
-<pre class="r"><code>dna_names = read.csv(&#39;../../Phenotype_data/selected_genotypeIDs.csv&#39;,h=T)
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuZG5hX25hbWVzID0gcmVhZC5jc3YoJy4uLy4uL1BoZW5vdHlwZV9kYXRhL3NlbGVjdGVkX2dlbm90eXBlSURzLmNzdicsaD1UKVxuXG5kbmFfdG9fdGNfZ2lkID0gYXMuZGF0YS5mcmFtZShyZWFkeGw6OnJlYWRfeGxzeCgnLi4vLi4vUGhlbm90eXBlX2RhdGEvSGVhcm5lX2RhdGEvZGF0YXNldC9CbHVwc18wMS54bHN4JyxzaGVldCA9ICdETkEgdG8gVEMgR0lEJykpXG5gYGBcbmBgYCJ9 -->
+<pre class="r"><code>```r
+dna_names = read.csv(&#39;../../Phenotype_data/selected_genotypeIDs.csv&#39;,h=T)
 
 dna_to_tc_gid = as.data.frame(readxl::read_xlsx(&#39;../../Phenotype_data/Hearne_data/dataset/Blups_01.xlsx&#39;,sheet = &#39;DNA to TC GID&#39;))</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiV2FybmluZzogRXhwZWN0aW5nIGxvZ2ljYWwgaW4gRjQ3MDYgLyBSNDcwNkM2OiBnb3QgJ1xuQ0haTSAxMyAwOTEnV2FybmluZzogRXhwZWN0aW5nIGxvZ2ljYWwgaW4gRzQ3MDYgLyBSNDcwNkM3OiBnb3QgJ2JhdGFuIDExQidXYXJuaW5nOiBFeHBlY3RpbmcgbG9naWNhbCBpbiBGNDcwNyAvIFI0NzA3QzY6IGdvdCAnQ01MIDMxMidXYXJuaW5nOiBFeHBlY3RpbmcgbG9naWNhbCBpbiBHNDcwNyAvIFI0NzA3Qzc6IGdvdCAnSW50ZXJuYWwgZ2Vub3R5cGluZyBjb250cm9sJ1dhcm5pbmc6IEV4cGVjdGluZyBsb2dpY2FsIGluIEY0NzA4IC8gUjQ3MDhDNjogZ290ICdDTUwgNDQ0J1dhcm5pbmc6IEV4cGVjdGluZyBsb2dpY2FsIGluIEc0NzA4IC8gUjQ3MDhDNzogZ290ICdJbnRlcm5hbCBnZW5vdHlwaW5nIGNvbnRyb2wnV2FybmluZzogRXhwZWN0aW5nIGxvZ2ljYWwgaW4gRjQ3MDkgLyBSNDcwOUM2OiBnb3QgJ01FWEkgNzgnV2FybmluZzogRXhwZWN0aW5nIGxvZ2ljYWwgaW4gRzQ3MDkgLyBSNDcwOUM3OiBnb3QgJ0JhdGFuIDExQidXYXJuaW5nOiBFeHBlY3RpbmcgbG9naWNhbCBpbiBGNDcxMCAvIFI0NzEwQzY6IGdvdCAnT2F4YSAyODknV2FybmluZzogRXhwZWN0aW5nIGxvZ2ljYWwgaW4gRzQ3MTAgLyBSNDcxMEM3OiBnb3QgJ0JhdGFuIDExQidXYXJuaW5nOiBFeHBlY3RpbmcgbG9naWNhbCBpbiBGNDcxMSAvIFI0NzExQzY6IGdvdCAnUFVFQiA4MjknV2FybmluZzogRXhwZWN0aW5nIGxvZ2ljYWwgaW4gRzQ3MTEgLyBSNDcxMUM3OiBnb3QgJ0JhdGFuIDExQidcbiJ9 -->
-<pre><code>Warning: Expecting logical in F4706 / R4706C6: got &#39;
-CHZM 13 091&#39;Warning: Expecting logical in G4706 / R4706C7: got &#39;batan 11B&#39;Warning: Expecting logical in F4707 / R4707C6: got &#39;CML 312&#39;Warning: Expecting logical in G4707 / R4707C7: got &#39;Internal genotyping control&#39;Warning: Expecting logical in F4708 / R4708C6: got &#39;CML 444&#39;Warning: Expecting logical in G4708 / R4708C7: got &#39;Internal genotyping control&#39;Warning: Expecting logical in F4709 / R4709C6: got &#39;MEXI 78&#39;Warning: Expecting logical in G4709 / R4709C7: got &#39;Batan 11B&#39;Warning: Expecting logical in F4710 / R4710C6: got &#39;Oaxa 289&#39;Warning: Expecting logical in G4710 / R4710C7: got &#39;Batan 11B&#39;Warning: Expecting logical in F4711 / R4711C6: got &#39;PUEB 829&#39;Warning: Expecting logical in G4711 / R4711C7: got &#39;Batan 11B&#39;</code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBhbGwgZG5hX25hbWVzJFNhbXBsZSBhcmUgaW4gdGhlIEJMVVBzIGRhdGFcbm1lYW4oZG5hX25hbWVzJFNhbXBsZSAlaW4lIGRuYV90b190Y19naWQkYFNhbXBsZSBJRGApXG5gYGAifQ== -->
-<pre class="r"><code># all dna_names$Sample are in the BLUPs data
+<pre><code>
+&lt;!-- rnb-source-end --&gt;
+
+&lt;!-- rnb-output-begin eyJkYXRhIjoiV2FybmluZzogRXhwZWN0aW5nIGxvZ2ljYWwgaW4gRjQ3MDYgLyBSNDcwNkM2OiBnb3QgJ1xuQ0haTSAxMyAwOTEnV2FybmluZzogRXhwZWN0aW5nIGxvZ2ljYWwgaW4gRzQ3MDYgLyBSNDcwNkM3OiBnb3QgJ2JhdGFuIDExQidXYXJuaW5nOiBFeHBlY3RpbmcgbG9naWNhbCBpbiBGNDcwNyAvIFI0NzA3QzY6IGdvdCAnQ01MIDMxMidXYXJuaW5nOiBFeHBlY3RpbmcgbG9naWNhbCBpbiBHNDcwNyAvIFI0NzA3Qzc6IGdvdCAnSW50ZXJuYWwgZ2Vub3R5cGluZyBjb250cm9sJ1dhcm5pbmc6IEV4cGVjdGluZyBsb2dpY2FsIGluIEY0NzA4IC8gUjQ3MDhDNjogZ290ICdDTUwgNDQ0J1dhcm5pbmc6IEV4cGVjdGluZyBsb2dpY2FsIGluIEc0NzA4IC8gUjQ3MDhDNzogZ290ICdJbnRlcm5hbCBnZW5vdHlwaW5nIGNvbnRyb2wnV2FybmluZzogRXhwZWN0aW5nIGxvZ2ljYWwgaW4gRjQ3MDkgLyBSNDcwOUM2OiBnb3QgJ01FWEkgNzgnV2FybmluZzogRXhwZWN0aW5nIGxvZ2ljYWwgaW4gRzQ3MDkgLyBSNDcwOUM3OiBnb3QgJ0JhdGFuIDExQidXYXJuaW5nOiBFeHBlY3RpbmcgbG9naWNhbCBpbiBGNDcxMCAvIFI0NzEwQzY6IGdvdCAnT2F4YSAyODknV2FybmluZzogRXhwZWN0aW5nIGxvZ2ljYWwgaW4gRzQ3MTAgLyBSNDcxMEM3OiBnb3QgJ0JhdGFuIDExQidXYXJuaW5nOiBFeHBlY3RpbmcgbG9naWNhbCBpbiBGNDcxMSAvIFI0NzExQzY6IGdvdCAnUFVFQiA4MjknV2FybmluZzogRXhwZWN0aW5nIGxvZ2ljYWwgaW4gRzQ3MTEgLyBSNDcxMUM3OiBnb3QgJ0JhdGFuIDExQidcbiJ9 --&gt;
+</code></pre>
+<p>Warning: Expecting logical in F4706 / R4706C6: got ’ CHZM 13
+091’Warning: Expecting logical in G4706 / R4706C7: got ‘batan
+11B’Warning: Expecting logical in F4707 / R4707C6: got ’CML 312’Warning:
+Expecting logical in G4707 / R4707C7: got ’Internal genotyping
+control’Warning: Expecting logical in F4708 / R4708C6: got ’CML
+444’Warning: Expecting logical in G4708 / R4708C7: got ’Internal
+genotyping control’Warning: Expecting logical in F4709 / R4709C6: got
+’MEXI 78’Warning: Expecting logical in G4709 / R4709C7: got ’Batan
+11B’Warning: Expecting logical in F4710 / R4710C6: got ’Oaxa
+289’Warning: Expecting logical in G4710 / R4710C7: got ’Batan
+11B’Warning: Expecting logical in F4711 / R4711C6: got ’PUEB
+829’Warning: Expecting logical in G4711 / R4711C7: got ’Batan 11B’</p>
+<pre><code>
+
+
+&lt;!-- rnb-output-end --&gt;
+
+&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuIyBhbGwgZG5hX25hbWVzJFNhbXBsZSBhcmUgaW4gdGhlIEJMVVBzIGRhdGFcbm1lYW4oZG5hX25hbWVzJFNhbXBsZSAlaW4lIGRuYV90b190Y19naWQkYFNhbXBsZSBJRGApXG5gYGBcbmBgYCJ9 --&gt;
+
+```r
+```r
+# all dna_names$Sample are in the BLUPs data
 mean(dna_names$Sample %in% dna_to_tc_gid$`Sample ID`)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiWzFdIDFcbiJ9 -->
-<pre><code>[1] 1</code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<p>Notes:</p>
-<ul>
-<li><p>all GWAS_IDs from the sequencing data are in the
-<code>dna_to_tc_gid</code> sheet</p></li>
-<li><p>check TC GID: 286910. It has 2 SEEDGWAS_IDs. Are these the
-same?</p>
-<ul>
-<li>Their genotypes are different, but they are almost the best match to
-each other in the dataset</li>
-<li>should drop the TC GID for phenotype GWAS</li>
-</ul></li>
-</ul>
-</div>
-<div id="phenotype-data" class="section level1">
-<h1>Phenotype data</h1>
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYmx1cHMgPSBhcy5kYXRhLmZyYW1lKHJlYWR4bDo6cmVhZF94bHN4KCcuLi8uLi9QaGVub3R5cGVfZGF0YS9IZWFybmVfZGF0YS9kYXRhc2V0L0JsdXBzXzAxLnhsc3gnLHNoZWV0ID0gJ0JsdXBzMDEnLGNvbF90eXBlcyA9IGMocmVwKCd0ZXh0JywxMSksJ251bWVyaWMnKSkpXG5cbiMgcmVtb3ZlIFRDIEdJRDogMjg2OTEwIGZyb20gYWJvdmVcbmJsdXBzID0gc3Vic2V0KGJsdXBzLGBHSURgICE9IDI4NjkxMClcblxuc3VtKGRuYV90b190Y19naWQkYFRDIEdJRGAgJWluJSBibHVwcyRHSUQpXG5gYGAifQ== -->
-<pre class="r"><code>blups = as.data.frame(readxl::read_xlsx(&#39;../../Phenotype_data/Hearne_data/dataset/Blups_01.xlsx&#39;,sheet = &#39;Blups01&#39;,col_types = c(rep(&#39;text&#39;,11),&#39;numeric&#39;)))
+<pre><code>
+&lt;!-- rnb-source-end --&gt;
+
+&lt;!-- rnb-output-begin eyJkYXRhIjoiWzFdIDFcbiJ9 --&gt;
+</code></pre>
+<p>[1] 1</p>
+<pre><code>
+
+
+&lt;!-- rnb-output-end --&gt;
+
+&lt;!-- rnb-chunk-end --&gt;
+
+
+&lt;!-- rnb-text-begin --&gt;
+
+
+Notes:
+
+-   all GWAS_IDs from the sequencing data are in the `dna_to_tc_gid` sheet
+
+-   check TC GID: 286910. It has 2 SEEDGWAS_IDs. Are these the same?
+
+    -   Their genotypes are different, but they are almost the best match to each other in the dataset
+    -   should drop the TC GID for phenotype GWAS
+
+# Phenotype data
+
+
+&lt;!-- rnb-text-end --&gt;
+
+
+&lt;!-- rnb-chunk-begin --&gt;
+
+
+&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuYmx1cHMgPSBhcy5kYXRhLmZyYW1lKHJlYWR4bDo6cmVhZF94bHN4KCcuLi8uLi9QaGVub3R5cGVfZGF0YS9IZWFybmVfZGF0YS9kYXRhc2V0L0JsdXBzXzAxLnhsc3gnLHNoZWV0ID0gJ0JsdXBzMDEnLGNvbF90eXBlcyA9IGMocmVwKCd0ZXh0JywxMSksJ251bWVyaWMnKSkpXG5cbiMgcmVtb3ZlIFRDIEdJRDogMjg2OTEwIGZyb20gYWJvdmVcbmJsdXBzID0gc3Vic2V0KGJsdXBzLGBHSURgICE9IDI4NjkxMClcblxuc3VtKGRuYV90b190Y19naWQkYFRDIEdJRGAgJWluJSBibHVwcyRHSUQpXG5gYGBcbmBgYCJ9 --&gt;
+
+```r
+```r
+blups = as.data.frame(readxl::read_xlsx(&#39;../../Phenotype_data/Hearne_data/dataset/Blups_01.xlsx&#39;,sheet = &#39;Blups01&#39;,col_types = c(rep(&#39;text&#39;,11),&#39;numeric&#39;)))
 
 # remove TC GID: 286910 from above
 blups = subset(blups,`GID` != 286910)
 
 sum(dna_to_tc_gid$`TC GID` %in% blups$GID)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiWzFdIDM3MzZcbiJ9 -->
-<pre><code>[1] 3736</code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuc3VtKHVuaXF1ZShibHVwcyRHSUQpICVpbiUgZG5hX3RvX3RjX2dpZCRgVEMgR0lEYClcbmBgYCJ9 -->
-<pre class="r"><code>sum(unique(blups$GID) %in% dna_to_tc_gid$`TC GID`)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiWzFdIDM3MzZcbiJ9 -->
-<pre><code>[1] 3736</code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGVuZ3RoKHVuaXF1ZShibHVwcyRHSUQpKVxuYGBgIn0= -->
-<pre class="r"><code>length(unique(blups$GID))</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiWzFdIDQxMTdcbiJ9 -->
-<pre><code>[1] 4117</code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<p>Notes:</p>
-<ul>
-<li>phenotype GWAS sample size is 3736</li>
-</ul>
-<p>Remove bad trial:</p>
-<ul>
-<li>data from nmzpo has an issue in m2011BCH (duplicated entries with
-different Y, so dropping this trait here)</li>
-</ul>
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYmx1cHMgPSBzdWJzZXQoYmx1cHMsIShFeHBlcmltZW50byA9PSAnbTIwMTFCQ0gnICYgVmFyaWFibGUgPT0gJ25tenBvJykpXG5gYGAifQ== -->
-<pre class="r"><code>blups = subset(blups,!(Experimento == &#39;m2011BCH&#39; &amp; Variable == &#39;nmzpo&#39;))</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<p>Make into wide data</p>
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeSh0aWR5cilcbmJsdXBzX3dpZGUgPSBhcy5kYXRhLmZyYW1lKHBpdm90X3dpZGVyKGJsdXBzLG5hbWVzX2Zyb20gPSAnVmFyaWFibGUnLHZhbHVlc19mcm9tID0gJ1knKSlcbmJsdXBzX3dpZGUkU2FtcGxlSUQgPSBkbmFfdG9fdGNfZ2lkJGBTYW1wbGUgSURgW21hdGNoKGJsdXBzX3dpZGUkR0lELGRuYV90b190Y19naWQkYFRDIEdJRGApXVxuYmx1cHNfd2lkZSRUZXN0ZXIgPSAgZG5hX3RvX3RjX2dpZCRUZXN0ZXJbbWF0Y2goYmx1cHNfd2lkZSRHSUQsZG5hX3RvX3RjX2dpZCRgVEMgR0lEYCldXG5gYGAifQ== -->
-<pre class="r"><code>library(tidyr)
+<pre><code>
+&lt;!-- rnb-source-end --&gt;
+
+&lt;!-- rnb-output-begin eyJkYXRhIjoiWzFdIDM3MzZcbiJ9 --&gt;
+</code></pre>
+<p>[1] 3736</p>
+<pre><code>
+
+
+&lt;!-- rnb-output-end --&gt;
+
+&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuc3VtKHVuaXF1ZShibHVwcyRHSUQpICVpbiUgZG5hX3RvX3RjX2dpZCRgVEMgR0lEYClcbmBgYFxuYGBgIn0= --&gt;
+
+```r
+```r
+sum(unique(blups$GID) %in% dna_to_tc_gid$`TC GID`)</code></pre>
+<pre><code>
+&lt;!-- rnb-source-end --&gt;
+
+&lt;!-- rnb-output-begin eyJkYXRhIjoiWzFdIDM3MzZcbiJ9 --&gt;
+</code></pre>
+<p>[1] 3736</p>
+<pre><code>
+
+
+&lt;!-- rnb-output-end --&gt;
+
+&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxubGVuZ3RoKHVuaXF1ZShibHVwcyRHSUQpKVxuYGBgXG5gYGAifQ== --&gt;
+
+```r
+```r
+length(unique(blups$GID))</code></pre>
+<pre><code>
+&lt;!-- rnb-source-end --&gt;
+
+&lt;!-- rnb-output-begin eyJkYXRhIjoiWzFdIDQxMTdcbiJ9 --&gt;
+</code></pre>
+<p>[1] 4117</p>
+<pre><code>
+
+
+&lt;!-- rnb-output-end --&gt;
+
+&lt;!-- rnb-chunk-end --&gt;
+
+
+&lt;!-- rnb-text-begin --&gt;
+
+
+Notes:
+
+-   phenotype GWAS sample size is 3736
+
+Remove bad trial:
+
+-   data from nmzpo has an issue in m2011BCH (duplicated entries with different Y, so dropping this trait here)
+
+
+&lt;!-- rnb-text-end --&gt;
+
+
+&lt;!-- rnb-chunk-begin --&gt;
+
+
+&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuYmx1cHMgPSBzdWJzZXQoYmx1cHMsIShFeHBlcmltZW50byA9PSAnbTIwMTFCQ0gnICYgVmFyaWFibGUgPT0gJ25tenBvJykpXG5gYGBcbmBgYCJ9 --&gt;
+
+```r
+```r
+blups = subset(blups,!(Experimento == &#39;m2011BCH&#39; &amp; Variable == &#39;nmzpo&#39;))</code></pre>
+<pre><code>
+&lt;!-- rnb-source-end --&gt;
+
+&lt;!-- rnb-chunk-end --&gt;
+
+
+&lt;!-- rnb-text-begin --&gt;
+
+
+Make into wide data
+
+
+&lt;!-- rnb-text-end --&gt;
+
+
+&lt;!-- rnb-chunk-begin --&gt;
+
+
+&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxubGlicmFyeSh0aWR5cilcbmJsdXBzX3dpZGUgPSBhcy5kYXRhLmZyYW1lKHBpdm90X3dpZGVyKGJsdXBzLG5hbWVzX2Zyb20gPSAnVmFyaWFibGUnLHZhbHVlc19mcm9tID0gJ1knKSlcbmJsdXBzX3dpZGUkU2FtcGxlSUQgPSBkbmFfdG9fdGNfZ2lkJGBTYW1wbGUgSURgW21hdGNoKGJsdXBzX3dpZGUkR0lELGRuYV90b190Y19naWQkYFRDIEdJRGApXVxuYmx1cHNfd2lkZSRUZXN0ZXIgPSAgZG5hX3RvX3RjX2dpZCRUZXN0ZXJbbWF0Y2goYmx1cHNfd2lkZSRHSUQsZG5hX3RvX3RjX2dpZCRgVEMgR0lEYCldXG5gYGBcbmBgYCJ9 --&gt;
+
+```r
+```r
+library(tidyr)
 blups_wide = as.data.frame(pivot_wider(blups,names_from = &#39;Variable&#39;,values_from = &#39;Y&#39;))
 blups_wide$SampleID = dna_to_tc_gid$`Sample ID`[match(blups_wide$GID,dna_to_tc_gid$`TC GID`)]
 blups_wide$Tester =  dna_to_tc_gid$Tester[match(blups_wide$GID,dna_to_tc_gid$`TC GID`)]</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<p>Collect trial info:</p>
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShyZWFkeGwpXG5DbGFzc2lmaWNhdGlvbiA9IHJlYWQuY3N2KCcuLi8uLi9QaGVub3R5cGVfZGF0YS9UcmlhbF9jbGFzc2lmaWNhdGlvbi5jc3YnKVxudHlwZSA9IGFzLmRhdGEuZnJhbWUocmVhZF94bHN4KCcuLi8uLi9QaGVub3R5cGVfZGF0YS9IZWFybmVfZGF0YS9kYXRhc2V0L0JsdXBzXzAxLnhsc3gnLHNoZWV0ID0gJ1RyaWFscycpKVxuVHJhaXRfaW5mbyA9IGFzLmRhdGEuZnJhbWUocmVhZF94bHN4KCcuLi8uLi9QaGVub3R5cGVfZGF0YS9IZWFybmVfZGF0YS9kYXRhc2V0L0JsdXBzXzAxLnhsc3gnLHNoZWV0ID0gJ1RyYWl0cycpKVxubWFuYWdlbWVudCA9IGFzLmRhdGEuZnJhbWUocmVhZF94bHN4KCcuLi8uLi9QaGVub3R5cGVfZGF0YS9IZWFybmVfZGF0YS9kYXRhc2V0L0JsdXBzXzAxLnhsc3gnLHNoZWV0ID0gJ01hbmFnZW1lbnQnKSlcbmN5Y2xlcyA9IGFzLmRhdGEuZnJhbWUocmVhZF94bHN4KCcuLi8uLi9QaGVub3R5cGVfZGF0YS9IZWFybmVfZGF0YS9kYXRhc2V0L0JsdXBzXzAxLnhsc3gnLHNoZWV0ID0gJ0N5Y2xlJykpXG5sb2NhdGlvbiA9IHJlYWQuY3N2KCcuLi8uLi9QaGVub3R5cGVfZGF0YS9UYWJsZV9TMTRfVHJpYWxMYXRMb25nVGFibGUuY3N2JylcbmxvY2F0aW9uJFggPSB0cmltd3MobG9jYXRpb24kWClcbmxvY2F0aW9uJEhlYXJuZV9uYW1lID0gdHJpbXdzKGxvY2F0aW9uJEhlYXJuZV9uYW1lKVxuXG5cbnRyaWFscyA9IHVuaXF1ZShibHVwc193aWRlWywxOjldKVxudHJpYWxzJE1hbmVnZW1lbnQgPSBtYW5hZ2VtZW50JEVuZ2xpc2hbbWF0Y2godHJpYWxzJE1hbmVqbyxtYW5hZ2VtZW50JENvZGUpXVxudHJpYWxzJEN5Y2xlID0gY3ljbGVzJEVuZ2xpc2hbbWF0Y2godHJpYWxzJENpY2xvLGN5Y2xlcyRDb2RlKV1cbnRyaWFscyRUeXBlMSA9IHR5cGUkRW5nbGlzaFttYXRjaCh0cmlhbHMkUHJvcG9zaXRvMSx0eXBlJENvZGUpXVxudHJpYWxzJFR5cGUyID0gdHlwZSRFbmdsaXNoW21hdGNoKHRyaWFscyRQcm9wb3NpdG8yLHR5cGUkQ29kZSldXG50cmlhbHMkQ2xhc3NpZmljYXRpb24gPSBDbGFzc2lmaWNhdGlvbiRDbGFzc1ttYXRjaCh0cmlhbHMkRXhwZXJpbWVudG8sQ2xhc3NpZmljYXRpb24kRXhwZXJpbWVudG8pXVxudHJpYWxzID0gdHJpYWxzW29yZGVyKHRyaWFscyRDbGFzc2lmaWNhdGlvbix0cmlhbHMkTG9jYWxpZGFkLHRyaWFscyRBw7FvKSxdXG50cmlhbHMkVHJpYWxfZWxldmF0aW9uID0gbG9jYXRpb24kQWx0aXR1ZGUuLm0uW21hdGNoKHRyaWFscyRMb2NhbGlkYWQsdHJpbXdzKGxvY2F0aW9uJEhlYXJuZV9uYW1lKSldXG50cmlhbHMkVHJpYWxfbGF0aXR1ZGUgPSBsb2NhdGlvbiRsYXRpdHVkZVttYXRjaCh0cmlhbHMkTG9jYWxpZGFkLHRyaW13cyhsb2NhdGlvbiRIZWFybmVfbmFtZSkpXVxudHJpYWxzJFRyaWFsX2xvbmdpdHVkZSA9IGxvY2F0aW9uJGxvbmdpdHVkZVttYXRjaCh0cmlhbHMkTG9jYWxpZGFkLHRyaW13cyhsb2NhdGlvbiRIZWFybmVfbmFtZSkpXVxuXG5cbnRyYWl0cyA9IGMoJ2FzaScsJ2RmZicsJ3BjYW1wbycsJ3BncmhhaCcsJ3BvbG90ZScsJ2FsdHBsJywncGdyaGEnKVxudHJhaXROYW1lcyA9IGMoJ0FTSScsJ0RheXNUb0Zsb3dlcmluZycsJ0ZpZWxkV2VpZ2h0JywnR3JhaW5XZWlnaHRQZXJIZWN0YXJlQ29ycmVjdGVkJywnQmFyZUNvYldlaWdodCcsJ1BsYW50SGVpZ2h0JywnR3JhaW5XZWlnaHRQZXJIZWN0YXJlJylcbmZvcih0cmFpdCBpbiB0cmFpdHMpIHtcbiAgdHJpYWxzW1t0cmFpdE5hbWVzW21hdGNoKHRyYWl0LHRyYWl0cyldXV0gPSBzYXBwbHkodHJpYWxzJEV4cGVyaW1lbnRvLGZ1bmN0aW9uKHgpIHN1bSghaXMubmEoc3Vic2V0KHN1YnNldChibHVwc193aWRlLCFpcy5uYShTYW1wbGVJRCkpLEV4cGVyaW1lbnRvID09IHgpW1t0cmFpdF1dKSkpXG59XG51bmlxdWUoYmx1cHMkVmFyaWFibGUpICVpbiUgZ3N1YignLicsJycsVHJhaXRfaW5mbyRWYXJpYWJsZSxmaXhlZD1UKVxuYGBgIn0= -->
-<pre class="r"><code>library(readxl)
+<pre><code>
+&lt;!-- rnb-source-end --&gt;
+
+&lt;!-- rnb-chunk-end --&gt;
+
+
+&lt;!-- rnb-text-begin --&gt;
+
+
+Collect trial info:
+
+
+&lt;!-- rnb-text-end --&gt;
+
+
+&lt;!-- rnb-chunk-begin --&gt;
+
+
+&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxubGlicmFyeShyZWFkeGwpXG5DbGFzc2lmaWNhdGlvbiA9IHJlYWQuY3N2KCcuLi8uLi9QaGVub3R5cGVfZGF0YS9UcmlhbF9jbGFzc2lmaWNhdGlvbi5jc3YnKVxudHlwZSA9IGFzLmRhdGEuZnJhbWUocmVhZF94bHN4KCcuLi8uLi9QaGVub3R5cGVfZGF0YS9IZWFybmVfZGF0YS9kYXRhc2V0L0JsdXBzXzAxLnhsc3gnLHNoZWV0ID0gJ1RyaWFscycpKVxuVHJhaXRfaW5mbyA9IGFzLmRhdGEuZnJhbWUocmVhZF94bHN4KCcuLi8uLi9QaGVub3R5cGVfZGF0YS9IZWFybmVfZGF0YS9kYXRhc2V0L0JsdXBzXzAxLnhsc3gnLHNoZWV0ID0gJ1RyYWl0cycpKVxubWFuYWdlbWVudCA9IGFzLmRhdGEuZnJhbWUocmVhZF94bHN4KCcuLi8uLi9QaGVub3R5cGVfZGF0YS9IZWFybmVfZGF0YS9kYXRhc2V0L0JsdXBzXzAxLnhsc3gnLHNoZWV0ID0gJ01hbmFnZW1lbnQnKSlcbmN5Y2xlcyA9IGFzLmRhdGEuZnJhbWUocmVhZF94bHN4KCcuLi8uLi9QaGVub3R5cGVfZGF0YS9IZWFybmVfZGF0YS9kYXRhc2V0L0JsdXBzXzAxLnhsc3gnLHNoZWV0ID0gJ0N5Y2xlJykpXG5sb2NhdGlvbiA9IHJlYWQuY3N2KCcuLi8uLi9QaGVub3R5cGVfZGF0YS9UYWJsZV9TMTRfVHJpYWxMYXRMb25nVGFibGUuY3N2JylcbmxvY2F0aW9uJFggPSB0cmltd3MobG9jYXRpb24kWClcbmxvY2F0aW9uJEhlYXJuZV9uYW1lID0gdHJpbXdzKGxvY2F0aW9uJEhlYXJuZV9uYW1lKVxuXG5cbnRyaWFscyA9IHVuaXF1ZShibHVwc193aWRlWywxOjldKVxudHJpYWxzJE1hbmVnZW1lbnQgPSBtYW5hZ2VtZW50JEVuZ2xpc2hbbWF0Y2godHJpYWxzJE1hbmVqbyxtYW5hZ2VtZW50JENvZGUpXVxudHJpYWxzJEN5Y2xlID0gY3ljbGVzJEVuZ2xpc2hbbWF0Y2godHJpYWxzJENpY2xvLGN5Y2xlcyRDb2RlKV1cbnRyaWFscyRUeXBlMSA9IHR5cGUkRW5nbGlzaFttYXRjaCh0cmlhbHMkUHJvcG9zaXRvMSx0eXBlJENvZGUpXVxudHJpYWxzJFR5cGUyID0gdHlwZSRFbmdsaXNoW21hdGNoKHRyaWFscyRQcm9wb3NpdG8yLHR5cGUkQ29kZSldXG50cmlhbHMkQ2xhc3NpZmljYXRpb24gPSBDbGFzc2lmaWNhdGlvbiRDbGFzc1ttYXRjaCh0cmlhbHMkRXhwZXJpbWVudG8sQ2xhc3NpZmljYXRpb24kRXhwZXJpbWVudG8pXVxudHJpYWxzID0gdHJpYWxzW29yZGVyKHRyaWFscyRDbGFzc2lmaWNhdGlvbix0cmlhbHMkTG9jYWxpZGFkLHRyaWFscyRBw7FvKSxdXG50cmlhbHMkVHJpYWxfZWxldmF0aW9uID0gbG9jYXRpb24kQWx0aXR1ZGUuLm0uW21hdGNoKHRyaWFscyRMb2NhbGlkYWQsdHJpbXdzKGxvY2F0aW9uJEhlYXJuZV9uYW1lKSldXG50cmlhbHMkVHJpYWxfbGF0aXR1ZGUgPSBsb2NhdGlvbiRsYXRpdHVkZVttYXRjaCh0cmlhbHMkTG9jYWxpZGFkLHRyaW13cyhsb2NhdGlvbiRIZWFybmVfbmFtZSkpXVxudHJpYWxzJFRyaWFsX2xvbmdpdHVkZSA9IGxvY2F0aW9uJGxvbmdpdHVkZVttYXRjaCh0cmlhbHMkTG9jYWxpZGFkLHRyaW13cyhsb2NhdGlvbiRIZWFybmVfbmFtZSkpXVxuXG5cbnRyYWl0cyA9IGMoJ2FzaScsJ2RmZicsJ3BjYW1wbycsJ3BncmhhaCcsJ3BvbG90ZScsJ2FsdHBsJywncGdyaGEnKVxudHJhaXROYW1lcyA9IGMoJ0FTSScsJ0RheXNUb0Zsb3dlcmluZycsJ0ZpZWxkV2VpZ2h0JywnR3JhaW5XZWlnaHRQZXJIZWN0YXJlQ29ycmVjdGVkJywnQmFyZUNvYldlaWdodCcsJ1BsYW50SGVpZ2h0JywnR3JhaW5XZWlnaHRQZXJIZWN0YXJlJylcbmZvcih0cmFpdCBpbiB0cmFpdHMpIHtcbiAgdHJpYWxzW1t0cmFpdE5hbWVzW21hdGNoKHRyYWl0LHRyYWl0cyldXV0gPSBzYXBwbHkodHJpYWxzJEV4cGVyaW1lbnRvLGZ1bmN0aW9uKHgpIHN1bSghaXMubmEoc3Vic2V0KHN1YnNldChibHVwc193aWRlLCFpcy5uYShTYW1wbGVJRCkpLEV4cGVyaW1lbnRvID09IHgpW1t0cmFpdF1dKSkpXG59XG51bmlxdWUoYmx1cHMkVmFyaWFibGUpICVpbiUgZ3N1YignLicsJycsVHJhaXRfaW5mbyRWYXJpYWJsZSxmaXhlZD1UKVxuYGBgXG5gYGAifQ== --&gt;
+
+```r
+```r
+library(readxl)
 Classification = read.csv(&#39;../../Phenotype_data/Trial_classification.csv&#39;)
 type = as.data.frame(read_xlsx(&#39;../../Phenotype_data/Hearne_data/dataset/Blups_01.xlsx&#39;,sheet = &#39;Trials&#39;))
 Trait_info = as.data.frame(read_xlsx(&#39;../../Phenotype_data/Hearne_data/dataset/Blups_01.xlsx&#39;,sheet = &#39;Traits&#39;))
@@ -1895,16 +1999,30 @@ for(trait in traits) {
   trials[[traitNames[match(trait,traits)]]] = sapply(trials$Experimento,function(x) sum(!is.na(subset(subset(blups_wide,!is.na(SampleID)),Experimento == x)[[trait]])))
 }
 unique(blups$Variable) %in% gsub(&#39;.&#39;,&#39;&#39;,Trait_info$Variable,fixed=T)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiICBbMV0gIFRSVUUgIFRSVUUgIFRSVUUgIFRSVUUgIFRSVUUgIFRSVUUgIFRSVUUgIFRSVUUgIFRSVUUgIFRSVUUgIFRSVUUgIFRSVUUgIFRSVUUgIFRSVUUgIFRSVUUgIFRSVUUgRkFMU0UgRkFMU0UgRkFMU0UgRkFMU0UgIFRSVUUgRkFMU0UgIFRSVUUgIFRSVUUgIFRSVUUgIFRSVUUgIFRSVUVcbiBbMjhdICBUUlVFICBUUlVFICBUUlVFICBUUlVFICBUUlVFICBUUlVFICBUUlVFICBUUlVFICBUUlVFICBUUlVFICBUUlVFICBUUlVFICBUUlVFICBUUlVFICBUUlVFICBUUlVFICBUUlVFICBUUlVFICBUUlVFICBUUlVFICBUUlVFICBUUlVFICBUUlVFIEZBTFNFICBUUlVFIEZBTFNFIEZBTFNFXG4gWzU1XSAgVFJVRSAgVFJVRSAgVFJVRSAgVFJVRSAgVFJVRSBGQUxTRSBGQUxTRSBGQUxTRSAgVFJVRSBGQUxTRSBGQUxTRSAgVFJVRSAgVFJVRSAgVFJVRSAgVFJVRSAgVFJVRSAgVFJVRSAgVFJVRSAgVFJVRSAgVFJVRSAgVFJVRSAgVFJVRSBGQUxTRSAgVFJVRSBGQUxTRSAgVFJVRSAgVFJVRVxuIFs4Ml0gIFRSVUUgIFRSVUUgIFRSVUUgIFRSVUUgIFRSVUUgIFRSVUUgRkFMU0UgRkFMU0UgRkFMU0UgRkFMU0UgRkFMU0UgIFRSVUUgIFRSVUUgIFRSVUUgIFRSVUUgRkFMU0UgRkFMU0UgRkFMU0UgRkFMU0UgRkFMU0UgRkFMU0UgRkFMU0UgIFRSVUUgIFRSVUUgIFRSVUUgIFRSVUUgIFRSVUVcblsxMDldICBUUlVFIEZBTFNFXG4ifQ== -->
-<pre><code>  [1]  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE FALSE FALSE FALSE FALSE  TRUE FALSE  TRUE  TRUE  TRUE  TRUE  TRUE
- [28]  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE FALSE  TRUE FALSE FALSE
- [55]  TRUE  TRUE  TRUE  TRUE  TRUE FALSE FALSE FALSE  TRUE FALSE FALSE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE FALSE  TRUE FALSE  TRUE  TRUE
- [82]  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE FALSE FALSE FALSE FALSE FALSE  TRUE  TRUE  TRUE  TRUE FALSE FALSE FALSE FALSE FALSE FALSE FALSE  TRUE  TRUE  TRUE  TRUE  TRUE
-[109]  TRUE FALSE</code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZGlzZWFzZV90cmFpdHMgPSBzdWJzZXQoVHJhaXRfaW5mbyxEaXNlYXNlX3RyYWl0ID09ICdYJykkVmFyaWFibGVcblxuXG4jIFRoaXMgc2hvd3MgdGhhdCBlaXRoZXIgbmVhcmx5IGFsbCBsaW5lcyBoYXZlIGRpc2Vhc2Ugc2NvcmVzIG9yIG5vbmVcbmRpc2Vhc2Vfc2NvcmVzID0gYygpXG5tZWFuX2Z1bmN0aW9uID0gZnVuY3Rpb24oeCkgaWZlbHNlKHN1bSghaXMubmEoeCkpID09IDAsTkEsbWVhbih4LG5hLnJtPVQpKVxuZm9yKGkgaW4gMTpucm93KHRyaWFscykpIHtcbiAgZGF0YSA9IHN1YnNldChibHVwc193aWRlLEV4cGVyaW1lbnRvID09IHRyaWFscyRFeHBlcmltZW50b1tpXSlcbiAgZGF0YSA9IHN1YnNldChkYXRhLHJvd1N1bXMoIWlzLm5hKGRhdGFbLHRyYWl0c10pKT4wKVxuICBkaXNlYXNlX3Njb3JlcyA9IHJiaW5kKGRpc2Vhc2Vfc2NvcmVzLGRhdGEuZnJhbWUoRXhwZXJpbWVudG8gPSB0cmlhbHMkRXhwZXJpbWVudG9baV0sdChhcHBseShkYXRhWyxkaXNlYXNlX3RyYWl0c10sMixtZWFuX2Z1bmN0aW9uKSkpKVxufVxudHJpYWxzID0gbWVyZ2UodHJpYWxzLGRpc2Vhc2Vfc2NvcmVzLGJ5ID0gJ0V4cGVyaW1lbnRvJylcblxudHJpYWxzID0gdHJpYWxzW29yZGVyKHRyaWFscyRDbGFzc2lmaWNhdGlvbix0cmlhbHMkTG9jYWxpZGFkLHRyaWFscyRBw7FvKSxdXG50cmlhbHMgPSBzdWJzZXQodHJpYWxzLEV4cGVyaW1lbnRvICE9ICdtMjAxMUJJRycpICMgZW1wdHkgdHJpYWxcblxud3JpdGUuY3N2KHRyaWFsc1ssLWMoMyw0LDcsOCw5KV0sZmlsZSA9ICcuLi8uLi9QaGVub3R5cGVfZGF0YS9UcmlhbF9pbmZvLmNzdicscm93Lm5hbWVzID0gRilcblxuYGBgIn0= -->
-<pre class="r"><code>disease_traits = subset(Trait_info,Disease_trait == &#39;X&#39;)$Variable
+<pre><code>
+&lt;!-- rnb-source-end --&gt;
+
+&lt;!-- rnb-output-begin eyJkYXRhIjoiICBbMV0gIFRSVUUgIFRSVUUgIFRSVUUgIFRSVUUgIFRSVUUgIFRSVUUgIFRSVUUgIFRSVUUgIFRSVUUgIFRSVUUgIFRSVUUgIFRSVUUgIFRSVUUgIFRSVUUgIFRSVUUgIFRSVUUgRkFMU0UgRkFMU0UgRkFMU0UgRkFMU0UgIFRSVUUgRkFMU0UgIFRSVUUgIFRSVUUgIFRSVUUgIFRSVUUgIFRSVUVcbiBbMjhdICBUUlVFICBUUlVFICBUUlVFICBUUlVFICBUUlVFICBUUlVFICBUUlVFICBUUlVFICBUUlVFICBUUlVFICBUUlVFICBUUlVFICBUUlVFICBUUlVFICBUUlVFICBUUlVFICBUUlVFICBUUlVFICBUUlVFICBUUlVFICBUUlVFICBUUlVFICBUUlVFIEZBTFNFICBUUlVFIEZBTFNFIEZBTFNFXG4gWzU1XSAgVFJVRSAgVFJVRSAgVFJVRSAgVFJVRSAgVFJVRSBGQUxTRSBGQUxTRSBGQUxTRSAgVFJVRSBGQUxTRSBGQUxTRSAgVFJVRSAgVFJVRSAgVFJVRSAgVFJVRSAgVFJVRSAgVFJVRSAgVFJVRSAgVFJVRSAgVFJVRSAgVFJVRSAgVFJVRSBGQUxTRSAgVFJVRSBGQUxTRSAgVFJVRSAgVFJVRVxuIFs4Ml0gIFRSVUUgIFRSVUUgIFRSVUUgIFRSVUUgIFRSVUUgIFRSVUUgRkFMU0UgRkFMU0UgRkFMU0UgRkFMU0UgRkFMU0UgIFRSVUUgIFRSVUUgIFRSVUUgIFRSVUUgRkFMU0UgRkFMU0UgRkFMU0UgRkFMU0UgRkFMU0UgRkFMU0UgRkFMU0UgIFRSVUUgIFRSVUUgIFRSVUUgIFRSVUUgIFRSVUVcblsxMDldICBUUlVFIEZBTFNFXG4ifQ== --&gt;
+</code></pre>
+<p>[1] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
+TRUE TRUE TRUE FALSE FALSE FALSE FALSE TRUE FALSE TRUE TRUE TRUE TRUE
+TRUE [28] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
+TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE FALSE TRUE FALSE
+FALSE [55] TRUE TRUE TRUE TRUE TRUE FALSE FALSE FALSE TRUE FALSE FALSE
+TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE FALSE TRUE FALSE
+TRUE TRUE [82] TRUE TRUE TRUE TRUE TRUE TRUE FALSE FALSE FALSE FALSE
+FALSE TRUE TRUE TRUE TRUE FALSE FALSE FALSE FALSE FALSE FALSE FALSE TRUE
+TRUE TRUE TRUE TRUE [109] TRUE FALSE</p>
+<pre><code>
+
+
+&lt;!-- rnb-output-end --&gt;
+
+&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuZGlzZWFzZV90cmFpdHMgPSBzdWJzZXQoVHJhaXRfaW5mbyxEaXNlYXNlX3RyYWl0ID09ICdYJykkVmFyaWFibGVcblxuXG4jIFRoaXMgc2hvd3MgdGhhdCBlaXRoZXIgbmVhcmx5IGFsbCBsaW5lcyBoYXZlIGRpc2Vhc2Ugc2NvcmVzIG9yIG5vbmVcbmRpc2Vhc2Vfc2NvcmVzID0gYygpXG5tZWFuX2Z1bmN0aW9uID0gZnVuY3Rpb24oeCkgaWZlbHNlKHN1bSghaXMubmEoeCkpID09IDAsTkEsbWVhbih4LG5hLnJtPVQpKVxuZm9yKGkgaW4gMTpucm93KHRyaWFscykpIHtcbiAgZGF0YSA9IHN1YnNldChibHVwc193aWRlLEV4cGVyaW1lbnRvID09IHRyaWFscyRFeHBlcmltZW50b1tpXSlcbiAgZGF0YSA9IHN1YnNldChkYXRhLHJvd1N1bXMoIWlzLm5hKGRhdGFbLHRyYWl0c10pKT4wKVxuICBkaXNlYXNlX3Njb3JlcyA9IHJiaW5kKGRpc2Vhc2Vfc2NvcmVzLGRhdGEuZnJhbWUoRXhwZXJpbWVudG8gPSB0cmlhbHMkRXhwZXJpbWVudG9baV0sdChhcHBseShkYXRhWyxkaXNlYXNlX3RyYWl0c10sMixtZWFuX2Z1bmN0aW9uKSkpKVxufVxudHJpYWxzID0gbWVyZ2UodHJpYWxzLGRpc2Vhc2Vfc2NvcmVzLGJ5ID0gJ0V4cGVyaW1lbnRvJylcblxudHJpYWxzID0gdHJpYWxzW29yZGVyKHRyaWFscyRDbGFzc2lmaWNhdGlvbix0cmlhbHMkTG9jYWxpZGFkLHRyaWFscyRBw7FvKSxdXG50cmlhbHMgPSBzdWJzZXQodHJpYWxzLEV4cGVyaW1lbnRvICE9ICdtMjAxMUJJRycpICMgZW1wdHkgdHJpYWxcblxud3JpdGUuY3N2KHRyaWFsc1ssLWMoMyw0LDcsOCw5KV0sZmlsZSA9ICcuLi8uLi9QaGVub3R5cGVfZGF0YS9UcmlhbF9pbmZvLmNzdicscm93Lm5hbWVzID0gRilcblxuYGBgXG5gYGAifQ== --&gt;
+
+```r
+```r
+disease_traits = subset(Trait_info,Disease_trait == &#39;X&#39;)$Variable
 
 
 # This shows that either nearly all lines have disease scores or none
@@ -1922,14 +2040,29 @@ trials = subset(trials,Experimento != &#39;m2011BIG&#39;) # empty trial
 
 write.csv(trials[,-c(3,4,7,8,9)],file = &#39;../../Phenotype_data/Trial_info.csv&#39;,row.names = F)
 </code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<p>Process BLUPs</p>
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYmx1cHNfd2lkZSA9IHN1YnNldChibHVwc193aWRlLEV4cGVyaW1lbnRvICVpbiUgdHJpYWxzJEV4cGVyaW1lbnRvICYgIWlzLm5hKFRlc3RlcikpXG5cbmJsdXBzX3dpZGUgPSBjYmluZChibHVwc193aWRlWyxjKCdFeHBlcmltZW50bycsJ1NhbXBsZUlEJywnVGVzdGVyJyksZHJvcD1GXSxcbiAgICAgICAgICAgICAgICAgICBUcmlhbF9DbGFzc2lmaWNhdGlvbiA9IHRyaWFscyRDbGFzc2lmaWNhdGlvblttYXRjaChibHVwc193aWRlJEV4cGVyaW1lbnRvLHRyaWFscyRFeHBlcmltZW50byldLFxuICAgICAgICAgICAgICAgICAgICAgICBibHVwc193aWRlWyx0cmFpdHNdXG4gICAgICAgICAgICAgICAgICApXG5jb2xuYW1lcyhibHVwc193aWRlKVttYXRjaCh0cmFpdHMsY29sbmFtZXMoYmx1cHNfd2lkZSkpXSA9IHRyYWl0TmFtZXNcblxuIyByZW1vdmUgZmxvd2VyaW5nIGRhdGEgZnJvbSBcIm0yMDExQkNIOiBHIFZpY3RvcmlhIFRhciBzcG90XCIgdHJpYWwgLSBIZWFybmUgc2F5cyBpdCB3YXNuJ3QgZ29vZC5cbmJsdXBzX3dpZGUkQVNJW2JsdXBzX3dpZGUkRXhwZXJpbWVudG8gPT0gJ20yMDExQkNIJ10gPSBOQVxuYmx1cHNfd2lkZSREYXlzVG9GbG93ZXJpbmdbYmx1cHNfd2lkZSRFeHBlcmltZW50byA9PSAnbTIwMTFCQ0gnXSA9IE5BXG5gYGAifQ== -->
-<pre class="r"><code>blups_wide = subset(blups_wide,Experimento %in% trials$Experimento &amp; !is.na(Tester))
+<pre><code>
+&lt;!-- rnb-source-end --&gt;
+
+&lt;!-- rnb-chunk-end --&gt;
+
+
+&lt;!-- rnb-text-begin --&gt;
+
+
+Process BLUPs
+
+
+&lt;!-- rnb-text-end --&gt;
+
+
+&lt;!-- rnb-chunk-begin --&gt;
+
+
+&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuYmx1cHNfd2lkZSA9IHN1YnNldChibHVwc193aWRlLEV4cGVyaW1lbnRvICVpbiUgdHJpYWxzJEV4cGVyaW1lbnRvICYgIWlzLm5hKFRlc3RlcikpXG5cbmJsdXBzX3dpZGUgPSBjYmluZChibHVwc193aWRlWyxjKCdFeHBlcmltZW50bycsJ1NhbXBsZUlEJywnVGVzdGVyJyksZHJvcD1GXSxcbiAgICAgICAgICAgICAgICAgICBUcmlhbF9DbGFzc2lmaWNhdGlvbiA9IHRyaWFscyRDbGFzc2lmaWNhdGlvblttYXRjaChibHVwc193aWRlJEV4cGVyaW1lbnRvLHRyaWFscyRFeHBlcmltZW50byldLFxuICAgICAgICAgICAgICAgICAgICAgICBibHVwc193aWRlWyx0cmFpdHNdXG4gICAgICAgICAgICAgICAgICApXG5jb2xuYW1lcyhibHVwc193aWRlKVttYXRjaCh0cmFpdHMsY29sbmFtZXMoYmx1cHNfd2lkZSkpXSA9IHRyYWl0TmFtZXNcblxuIyByZW1vdmUgZmxvd2VyaW5nIGRhdGEgZnJvbSBcXG0yMDExQkNIOiBHIFZpY3RvcmlhIFRhciBzcG90XFwgdHJpYWwgLSBIZWFybmUgc2F5cyBpdCB3YXNuJ3QgZ29vZC5cbmJsdXBzX3dpZGUkQVNJW2JsdXBzX3dpZGUkRXhwZXJpbWVudG8gPT0gJ20yMDExQkNIJ10gPSBOQVxuYmx1cHNfd2lkZSREYXlzVG9GbG93ZXJpbmdbYmx1cHNfd2lkZSRFeHBlcmltZW50byA9PSAnbTIwMTFCQ0gnXSA9IE5BXG5gYGBcbmBgYCJ9 --&gt;
+
+```r
+```r
+blups_wide = subset(blups_wide,Experimento %in% trials$Experimento &amp; !is.na(Tester))
 
 blups_wide = cbind(blups_wide[,c(&#39;Experimento&#39;,&#39;SampleID&#39;,&#39;Tester&#39;),drop=F],
                    Trial_Classification = trials$Classification[match(blups_wide$Experimento,trials$Experimento)],
@@ -1937,64 +2070,122 @@ blups_wide = cbind(blups_wide[,c(&#39;Experimento&#39;,&#39;SampleID&#39;,&#39;T
                   )
 colnames(blups_wide)[match(traits,colnames(blups_wide))] = traitNames
 
-# remove flowering data from &quot;m2011BCH: G Victoria Tar spot&quot; trial - Hearne says it wasn&#39;t good.
+# remove flowering data from \m2011BCH: G Victoria Tar spot\ trial - Hearne says it wasn&#39;t good.
 blups_wide$ASI[blups_wide$Experimento == &#39;m2011BCH&#39;] = NA
 blups_wide$DaysToFlowering[blups_wide$Experimento == &#39;m2011BCH&#39;] = NA</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<ul>
-<li><p>remove trait:trial:tester with &lt; 20 lines/tester</p></li>
-<li><p>remove trials with &lt; 10 unique values</p></li>
-<li><p>remove trials with h2 (reliability?) &lt; 0.1</p>
-<ul>
-<li>calculated as 1-`Average blup variance`/`Genetic variance`</li>
-</ul></li>
-<li><p>De-regress the BLUPs by dividing by h2. This makes the
-predictions of genetic values less accurate, but the effect sizes of the
-genetic values have appropriate scale (phenotype scale)</p>
-<ul>
-<li>Note: here, BLUPs are just scaled phenotype values (mostly, only a
-single observation of each line per trial, but spatial effects are
-removed).</li>
-</ul></li>
-<li><p>convert to proportion of mean (CV) except for ASI</p></li>
-</ul>
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxudHJhaXROYW1lc1xuXG5gYGAifQ== -->
-<pre class="r"><code>traitNames
+<pre><code>
+&lt;!-- rnb-source-end --&gt;
+
+&lt;!-- rnb-chunk-end --&gt;
+
+
+&lt;!-- rnb-text-begin --&gt;
+
+
+-   remove trait:trial:tester with \&lt; 20 lines/tester
+
+-   remove trials with \&lt; 10 unique values
+
+-   remove trials with h2 (reliability?) \&lt; 0.1
+
+    -   calculated as 1-\`Average blup variance\`/\`Genetic variance\`
+
+-   De-regress the BLUPs by dividing by h2. This makes the predictions of genetic values less accurate, but the effect sizes of the genetic values have appropriate scale (phenotype scale)
+
+    -   Note: here, BLUPs are just scaled phenotype values (mostly, only a single observation of each line per trial, but spatial effects are removed).
+
+-   convert to proportion of mean (CV) except for ASI
+
+
+&lt;!-- rnb-text-end --&gt;
+
+
+&lt;!-- rnb-chunk-begin --&gt;
+
+
+&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxudHJhaXROYW1lc1xuXG5gYGBcbmBgYCJ9 --&gt;
+
+```r
+```r
+traitNames
 </code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiWzFdIFwiQVNJXCIgICAgICAgICAgICAgICAgICAgICAgICAgICAgXCJEYXlzVG9GbG93ZXJpbmdcIiAgICAgICAgICAgICAgICBcIkZpZWxkV2VpZ2h0XCIgICAgICAgICAgICAgICAgICAgIFwiR3JhaW5XZWlnaHRQZXJIZWN0YXJlQ29ycmVjdGVkXCIgXCJCYXJlQ29iV2VpZ2h0XCIgICAgICAgICAgICAgICAgIFxuWzZdIFwiUGxhbnRIZWlnaHRcIiAgICAgICAgICAgICAgICAgICAgXCJHcmFpbldlaWdodFBlckhlY3RhcmVcIiAgICAgICAgIFxuIn0= -->
-<pre><code>[1] &quot;ASI&quot;                            &quot;DaysToFlowering&quot;                &quot;FieldWeight&quot;                    &quot;GrainWeightPerHectareCorrected&quot; &quot;BareCobWeight&quot;                 
-[6] &quot;PlantHeight&quot;                    &quot;GrainWeightPerHectare&quot;         </code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<p>Update trial_info</p>
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxudHJpYWxfaW5mbyA9IHJlYWQuY3N2KCcuLi8uLi9QaGVub3R5cGVfZGF0YS9UcmlhbF9pbmZvLmNzdicpXG5gYGAifQ== -->
-<pre class="r"><code>trial_info = read.csv(&#39;../../Phenotype_data/Trial_info.csv&#39;)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-</div>
-<div id="environment-data" class="section level1">
-<h1>Environment data</h1>
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubmV3X2Vudl9kYXRhID0gcmVhZF94bHN4KCcuLi9Eb3dubG9hZGVkX2RhdGEvUGFzc3BvcnQvTWFpemUgY2xpbWF0ZSBkYXRhIG5vdiAyMDIyIEFFWiBlbGV2YXRpb24gYnkgZ3Jvd2luZyBzZWFzb24gYW5kIGZsb3dlcmluZyBwZXJpb2QueGxzeCcpXG5cblxuYGBgIn0= -->
-<pre class="r"><code>new_env_data = read_xlsx(&#39;../Downloaded_data/Passport/Maize climate data nov 2022 AEZ elevation by growing season and flowering period.xlsx&#39;)
+<pre><code>
+&lt;!-- rnb-source-end --&gt;
+
+&lt;!-- rnb-output-begin eyJkYXRhIjoiWzFdIFxcQVNJXFwgICAgICAgICAgICAgICAgICAgICAgICAgICAgXFxEYXlzVG9GbG93ZXJpbmdcXCAgICAgICAgICAgICAgICBcXEZpZWxkV2VpZ2h0XFwgICAgICAgICAgICAgICAgICAgIFxcR3JhaW5XZWlnaHRQZXJIZWN0YXJlQ29ycmVjdGVkXFwgXFxCYXJlQ29iV2VpZ2h0XFwgICAgICAgICAgICAgICAgIFxuWzZdIFxcUGxhbnRIZWlnaHRcXCAgICAgICAgICAgICAgICAgICAgXFxHcmFpbldlaWdodFBlckhlY3RhcmVcXCAgICAgICAgIFxuIn0= --&gt;
 </code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGVuZ3RoKHVuaXF1ZShkbmFfdG9fdGNfZ2lkJGBBY2Nlc3Npb25HSUQgKEdlcm1wbGFzbSBJRCBhdCBDSU1NWVQ7IEdlbmVyYWxfaWRlbnRpZmllciBpbiBHZXJtaW5hdGUpYCkpXG5cbm5ld19lbnZfZGF0YSA9IHJlYWRfeGxzeCgnLi4vRG93bmxvYWRlZF9kYXRhL1Bhc3Nwb3J0L01haXplIGNsaW1hdGUgZGF0YSBub3YgMjAyMiBBRVogZWxldmF0aW9uIGJ5IGdyb3dpbmcgc2Vhc29uIGFuZCBmbG93ZXJpbmcgcGVyaW9kLnhsc3gnKVxuZ2VybWluYXRlX2RhdGEgPSBmcmVhZCgnLi4vR2VybWluYXRlX2RhdGEvZ2VybWluYXRlYmFzZV8wM2YzNjQxNi05NDVjLTRmYTctYmMyZC1iNjIzNzdkZTQwZDUudHh0JyxkYXRhLnRhYmxlPUYpXG5cbmxlbmd0aCh1bmlxdWUobmV3X2Vudl9kYXRhJEdJRCkpXG5zdW0odW5pcXVlKG5ld19lbnZfZGF0YSRHSUQpICVpbiUgZG5hX3RvX3RjX2dpZCRgQWNjZXNzaW9uR0lEIChHZXJtcGxhc20gSUQgYXQgQ0lNTVlUOyBHZW5lcmFsX2lkZW50aWZpZXIgaW4gR2VybWluYXRlKWApXG5cbmxlbmd0aCh1bmlxdWUoZ2VybWluYXRlX2RhdGEkZ2VuZXJhbF9pZGVudGlmaWVyKSlcbnN1bSh1bmlxdWUoZ2VybWluYXRlX2RhdGEkZ2VuZXJhbF9pZGVudGlmaWVyKSAlaW4lIGRuYV90b190Y19naWQkYEFjY2Vzc2lvbkdJRCAoR2VybXBsYXNtIElEIGF0IENJTU1ZVDsgR2VuZXJhbF9pZGVudGlmaWVyIGluIEdlcm1pbmF0ZSlgKVxubWVhbihkbmFfdG9fdGNfZ2lkJGBBY2Nlc3Npb25HSUQgKEdlcm1wbGFzbSBJRCBhdCBDSU1NWVQ7IEdlbmVyYWxfaWRlbnRpZmllciBpbiBHZXJtaW5hdGUpYCAlaW4lIHVuaXF1ZShnZXJtaW5hdGVfZGF0YSRnZW5lcmFsX2lkZW50aWZpZXIpKVxuXG5nZXJtaW5hdGVfZGF0YV93aXRoTGF0TG9uZyA9IHN1YnNldChnZXJtaW5hdGVfZGF0YSwhaXMubmEobG9jYXRpb25zX2xhdGl0dWRlK2xvY2F0aW9uc19sb25naXR1ZGUpKVxuXG5sZW5ndGgodW5pcXVlKGdlcm1pbmF0ZV9kYXRhX3dpdGhMYXRMb25nJGdlbmVyYWxfaWRlbnRpZmllcikpXG5zdW0odW5pcXVlKGdlcm1pbmF0ZV9kYXRhX3dpdGhMYXRMb25nJGdlbmVyYWxfaWRlbnRpZmllcikgJWluJSBkbmFfdG9fdGNfZ2lkJGBBY2Nlc3Npb25HSUQgKEdlcm1wbGFzbSBJRCBhdCBDSU1NWVQ7IEdlbmVyYWxfaWRlbnRpZmllciBpbiBHZXJtaW5hdGUpYClcbm1lYW4oZG5hX3RvX3RjX2dpZCRgQWNjZXNzaW9uR0lEIChHZXJtcGxhc20gSUQgYXQgQ0lNTVlUOyBHZW5lcmFsX2lkZW50aWZpZXIgaW4gR2VybWluYXRlKWAgJWluJSB1bmlxdWUoZ2VybWluYXRlX2RhdGFfd2l0aExhdExvbmckZ2VuZXJhbF9pZGVudGlmaWVyKSlcblxuXG50Y19pbmZvID0gZnJlYWQoJy4uL3ByZXBwZWRfZGF0YS9UZXN0Q3Jvc3NfcGFzc3BvcnQuY3N2JyxkYXRhLnRhYmxlPUYpXG5cblxuXG5sb2FkKCcuLi9lR1dBUy9Xb3JsZENsaW1NYXQuUmltYWdlJylcbiMgcmVtb3ZlIG91dGxpZXIgbGF0L2xvbmdcbiMgb25lIHBvaW50IHdpdGggbG9uZ2l0dWRlIG1pc3NpbmcgYSAtIHNpZ24uIFRoaXMgZ290IHRoZSB3cm9uZyB3ZWF0aGVyIGRhdGEgcHVsbGVkLlxuIyBvbmUgcG9pbnQgd2F5IG91dCBpbiB0aGUgcGFjaWZpYyAtIEhhd2FpaSwgc28gT0tcbmZpbmFsTWF0ID0gc3Vic2V0KGZpbmFsTWF0LGxvbmdpdHVkZSA8IDUwICYgIWlzLm5hKFNhbXBsZUlEKSlcblxuXG5HSURzID0gdW5pcXVlKGMobmV3X2Vudl9kYXRhJEdJRCxnZXJtaW5hdGVfZGF0YSRnZW5lcmFsX2lkZW50aWZpZXIsdGNfaW5mbyRBY2NHSUQpKVxuXG5sYXRfZGF0YSA9IGRhdGEuZnJhbWUoR0lEID0gR0lEcylcbmxhdF9kYXRhJEdXQVNfSUQgPSBkbmFfdG9fdGNfZ2lkJGBTYW1wbGUgSURgW21hdGNoKGxhdF9kYXRhJEdJRCxkbmFfdG9fdGNfZ2lkJGBBY2Nlc3Npb25HSUQgKEdlcm1wbGFzbSBJRCBhdCBDSU1NWVQ7IEdlbmVyYWxfaWRlbnRpZmllciBpbiBHZXJtaW5hdGUpYCldXG5sYXRfZGF0YSRsYXRfbmV3X2Vudl9kYXRhID0gbmV3X2Vudl9kYXRhJExhdE5ld1ttYXRjaChsYXRfZGF0YSRHSUQsbmV3X2Vudl9kYXRhJEdJRCldXG5sYXRfZGF0YSRsYXRfZ2VybWluYXRlID0gZ2VybWluYXRlX2RhdGEkbG9jYXRpb25zX2xhdGl0dWRlW21hdGNoKGxhdF9kYXRhJEdJRCxnZXJtaW5hdGVfZGF0YSRnZW5lcmFsX2lkZW50aWZpZXIpXVxubGF0X2RhdGEkbGF0X3RjX2luZm9fYnlfR0lEID0gdGNfaW5mbyRsYXRpdHVkZVttYXRjaChsYXRfZGF0YSRHSUQsdGNfaW5mbyRBY2NHSUQpXVxubGF0X2RhdGEkbG9uZ190Y19pbmZvX2J5X0dJRCA9IHRjX2luZm8kbG9uZ2l0dWRlW21hdGNoKGxhdF9kYXRhJEdJRCx0Y19pbmZvJEFjY0dJRCldXG4jIGxhdF9kYXRhJGxhdF9maW5hbE1hdCA9IGZpbmFsTWF0JGxhdGl0dWRlW21hdGNoKGxhdF9kYXRhJEdXQVNfSUQsZmluYWxNYXQkU2FtcGxlSUQpXVxubGF0X2RhdGEkbG9jYXRpb25zX3NpdGVfbmFtZSA9IGdlcm1pbmF0ZV9kYXRhJGxvY2F0aW9uc19zaXRlX25hbWVbbWF0Y2gobGF0X2RhdGEkR0lELGdlcm1pbmF0ZV9kYXRhJGdlbmVyYWxfaWRlbnRpZmllcildXG5sYXRfZGF0YSRsb2NhdGlvbnNfc2l0ZV9uYW1lW2xhdF9kYXRhJGxvY2F0aW9uc19zaXRlX25hbWU9PScnXSA9IE5BXG5cbmxhdF9kYXRhJGNvdW50cnkgPSBnZXJtaW5hdGVfZGF0YSRjb3VudHJpZXNfY291bnRyeV9uYW1lW21hdGNoKGxhdF9kYXRhJEdJRCxnZXJtaW5hdGVfZGF0YSRnZW5lcmFsX2lkZW50aWZpZXIpXVxuXG5cbmxpYnJhcnkoTUFTUylcbiMgaSA9ICFpcy5uYShsYXRfZGF0YSRsYXRfZmluYWxNYXQpXG4jIGxhdF9kYXRhJGZyYWN0aW9uID0gTkFcbiMgbGF0X2RhdGEkZnJhY3Rpb25baV0gPSBmcmFjdGlvbnMobGF0X2RhdGEkbGF0X2ZpbmFsTWF0W2ldIC0gZmxvb3IobGF0X2RhdGEkbGF0X2ZpbmFsTWF0W2ldKSlcbmZpbmFsTWF0JHNpdGVOYW1lID0gZ2VybWluYXRlX2RhdGEkbG9jYXRpb25zX3NpdGVfbmFtZVttYXRjaChmaW5hbE1hdCRTYW1wbGVJRCxnZXJtaW5hdGVfZGF0YSRgU2FtcGxlIElEIG9mIEROQSBmcm9tIHNpbmdsZSBwbGFudHMgdXNlZCBpbiBHV0FTYCldXG5cbnRjX2luZm8kc2l0ZU5hbWUgPSBnZXJtaW5hdGVfZGF0YSRsb2NhdGlvbnNfc2l0ZV9uYW1lW21hdGNoKHRjX2luZm8kQWNjR0lELGdlcm1pbmF0ZV9kYXRhJGdlbmVyYWxfaWRlbnRpZmllcildXG50Y19pbmZvJHNpdGVOYW1lW3RjX2luZm8kc2l0ZU5hbWUgPT0gJyddID0gTkFcblxuYGBgIn0= -->
-<pre class="r"><code>length(unique(dna_to_tc_gid$`AccessionGID (Germplasm ID at CIMMYT; General_identifier in Germinate)`))
+<p>[1]         <br />
+[6]    </p>
+<pre><code>
+
+
+&lt;!-- rnb-output-end --&gt;
+
+&lt;!-- rnb-chunk-end --&gt;
+
+
+&lt;!-- rnb-text-begin --&gt;
+
+
+Update trial_info
+
+
+&lt;!-- rnb-text-end --&gt;
+
+
+&lt;!-- rnb-chunk-begin --&gt;
+
+
+&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxudHJpYWxfaW5mbyA9IHJlYWQuY3N2KCcuLi8uLi9QaGVub3R5cGVfZGF0YS9UcmlhbF9pbmZvLmNzdicpXG5gYGBcbmBgYCJ9 --&gt;
+
+```r
+```r
+trial_info = read.csv(&#39;../../Phenotype_data/Trial_info.csv&#39;)</code></pre>
+<pre><code>
+&lt;!-- rnb-source-end --&gt;
+
+&lt;!-- rnb-chunk-end --&gt;
+
+
+&lt;!-- rnb-text-begin --&gt;
+
+
+# Environment data
+
+
+&lt;!-- rnb-text-end --&gt;
+
+
+&lt;!-- rnb-chunk-begin --&gt;
+
+
+&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxubmV3X2Vudl9kYXRhID0gcmVhZF94bHN4KCcuLi9Eb3dubG9hZGVkX2RhdGEvUGFzc3BvcnQvTWFpemUgY2xpbWF0ZSBkYXRhIG5vdiAyMDIyIEFFWiBlbGV2YXRpb24gYnkgZ3Jvd2luZyBzZWFzb24gYW5kIGZsb3dlcmluZyBwZXJpb2QueGxzeCcpXG5cblxuYGBgXG5gYGAifQ== --&gt;
+
+```r
+```r
+new_env_data = read_xlsx(&#39;../Downloaded_data/Passport/Maize climate data nov 2022 AEZ elevation by growing season and flowering period.xlsx&#39;)
+</code></pre>
+<pre><code>
+&lt;!-- rnb-source-end --&gt;
+
+&lt;!-- rnb-chunk-end --&gt;
+
+
+&lt;!-- rnb-text-begin --&gt;
+
+
+
+&lt;!-- rnb-text-end --&gt;
+
+
+&lt;!-- rnb-chunk-begin --&gt;
+
+
+&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxubGVuZ3RoKHVuaXF1ZShkbmFfdG9fdGNfZ2lkJGBBY2Nlc3Npb25HSUQgKEdlcm1wbGFzbSBJRCBhdCBDSU1NWVQ7IEdlbmVyYWxfaWRlbnRpZmllciBpbiBHZXJtaW5hdGUpYCkpXG5cbm5ld19lbnZfZGF0YSA9IHJlYWRfeGxzeCgnLi4vRG93bmxvYWRlZF9kYXRhL1Bhc3Nwb3J0L01haXplIGNsaW1hdGUgZGF0YSBub3YgMjAyMiBBRVogZWxldmF0aW9uIGJ5IGdyb3dpbmcgc2Vhc29uIGFuZCBmbG93ZXJpbmcgcGVyaW9kLnhsc3gnKVxuZ2VybWluYXRlX2RhdGEgPSBmcmVhZCgnLi4vR2VybWluYXRlX2RhdGEvZ2VybWluYXRlYmFzZV8wM2YzNjQxNi05NDVjLTRmYTctYmMyZC1iNjIzNzdkZTQwZDUudHh0JyxkYXRhLnRhYmxlPUYpXG5cbmxlbmd0aCh1bmlxdWUobmV3X2Vudl9kYXRhJEdJRCkpXG5zdW0odW5pcXVlKG5ld19lbnZfZGF0YSRHSUQpICVpbiUgZG5hX3RvX3RjX2dpZCRgQWNjZXNzaW9uR0lEIChHZXJtcGxhc20gSUQgYXQgQ0lNTVlUOyBHZW5lcmFsX2lkZW50aWZpZXIgaW4gR2VybWluYXRlKWApXG5cbmxlbmd0aCh1bmlxdWUoZ2VybWluYXRlX2RhdGEkZ2VuZXJhbF9pZGVudGlmaWVyKSlcbnN1bSh1bmlxdWUoZ2VybWluYXRlX2RhdGEkZ2VuZXJhbF9pZGVudGlmaWVyKSAlaW4lIGRuYV90b190Y19naWQkYEFjY2Vzc2lvbkdJRCAoR2VybXBsYXNtIElEIGF0IENJTU1ZVDsgR2VuZXJhbF9pZGVudGlmaWVyIGluIEdlcm1pbmF0ZSlgKVxubWVhbihkbmFfdG9fdGNfZ2lkJGBBY2Nlc3Npb25HSUQgKEdlcm1wbGFzbSBJRCBhdCBDSU1NWVQ7IEdlbmVyYWxfaWRlbnRpZmllciBpbiBHZXJtaW5hdGUpYCAlaW4lIHVuaXF1ZShnZXJtaW5hdGVfZGF0YSRnZW5lcmFsX2lkZW50aWZpZXIpKVxuXG5nZXJtaW5hdGVfZGF0YV93aXRoTGF0TG9uZyA9IHN1YnNldChnZXJtaW5hdGVfZGF0YSwhaXMubmEobG9jYXRpb25zX2xhdGl0dWRlK2xvY2F0aW9uc19sb25naXR1ZGUpKVxuXG5sZW5ndGgodW5pcXVlKGdlcm1pbmF0ZV9kYXRhX3dpdGhMYXRMb25nJGdlbmVyYWxfaWRlbnRpZmllcikpXG5zdW0odW5pcXVlKGdlcm1pbmF0ZV9kYXRhX3dpdGhMYXRMb25nJGdlbmVyYWxfaWRlbnRpZmllcikgJWluJSBkbmFfdG9fdGNfZ2lkJGBBY2Nlc3Npb25HSUQgKEdlcm1wbGFzbSBJRCBhdCBDSU1NWVQ7IEdlbmVyYWxfaWRlbnRpZmllciBpbiBHZXJtaW5hdGUpYClcbm1lYW4oZG5hX3RvX3RjX2dpZCRgQWNjZXNzaW9uR0lEIChHZXJtcGxhc20gSUQgYXQgQ0lNTVlUOyBHZW5lcmFsX2lkZW50aWZpZXIgaW4gR2VybWluYXRlKWAgJWluJSB1bmlxdWUoZ2VybWluYXRlX2RhdGFfd2l0aExhdExvbmckZ2VuZXJhbF9pZGVudGlmaWVyKSlcblxuXG50Y19pbmZvID0gZnJlYWQoJy4uL3ByZXBwZWRfZGF0YS9UZXN0Q3Jvc3NfcGFzc3BvcnQuY3N2JyxkYXRhLnRhYmxlPUYpXG5cblxuXG5sb2FkKCcuLi9lR1dBUy9Xb3JsZENsaW1NYXQuUmltYWdlJylcbiMgcmVtb3ZlIG91dGxpZXIgbGF0L2xvbmdcbiMgb25lIHBvaW50IHdpdGggbG9uZ2l0dWRlIG1pc3NpbmcgYSAtIHNpZ24uIFRoaXMgZ290IHRoZSB3cm9uZyB3ZWF0aGVyIGRhdGEgcHVsbGVkLlxuIyBvbmUgcG9pbnQgd2F5IG91dCBpbiB0aGUgcGFjaWZpYyAtIEhhd2FpaSwgc28gT0tcbmZpbmFsTWF0ID0gc3Vic2V0KGZpbmFsTWF0LGxvbmdpdHVkZSA8IDUwICYgIWlzLm5hKFNhbXBsZUlEKSlcblxuXG5HSURzID0gdW5pcXVlKGMobmV3X2Vudl9kYXRhJEdJRCxnZXJtaW5hdGVfZGF0YSRnZW5lcmFsX2lkZW50aWZpZXIsdGNfaW5mbyRBY2NHSUQpKVxuXG5sYXRfZGF0YSA9IGRhdGEuZnJhbWUoR0lEID0gR0lEcylcbmxhdF9kYXRhJEdXQVNfSUQgPSBkbmFfdG9fdGNfZ2lkJGBTYW1wbGUgSURgW21hdGNoKGxhdF9kYXRhJEdJRCxkbmFfdG9fdGNfZ2lkJGBBY2Nlc3Npb25HSUQgKEdlcm1wbGFzbSBJRCBhdCBDSU1NWVQ7IEdlbmVyYWxfaWRlbnRpZmllciBpbiBHZXJtaW5hdGUpYCldXG5sYXRfZGF0YSRsYXRfbmV3X2Vudl9kYXRhID0gbmV3X2Vudl9kYXRhJExhdE5ld1ttYXRjaChsYXRfZGF0YSRHSUQsbmV3X2Vudl9kYXRhJEdJRCldXG5sYXRfZGF0YSRsYXRfZ2VybWluYXRlID0gZ2VybWluYXRlX2RhdGEkbG9jYXRpb25zX2xhdGl0dWRlW21hdGNoKGxhdF9kYXRhJEdJRCxnZXJtaW5hdGVfZGF0YSRnZW5lcmFsX2lkZW50aWZpZXIpXVxubGF0X2RhdGEkbGF0X3RjX2luZm9fYnlfR0lEID0gdGNfaW5mbyRsYXRpdHVkZVttYXRjaChsYXRfZGF0YSRHSUQsdGNfaW5mbyRBY2NHSUQpXVxubGF0X2RhdGEkbG9uZ190Y19pbmZvX2J5X0dJRCA9IHRjX2luZm8kbG9uZ2l0dWRlW21hdGNoKGxhdF9kYXRhJEdJRCx0Y19pbmZvJEFjY0dJRCldXG4jIGxhdF9kYXRhJGxhdF9maW5hbE1hdCA9IGZpbmFsTWF0JGxhdGl0dWRlW21hdGNoKGxhdF9kYXRhJEdXQVNfSUQsZmluYWxNYXQkU2FtcGxlSUQpXVxubGF0X2RhdGEkbG9jYXRpb25zX3NpdGVfbmFtZSA9IGdlcm1pbmF0ZV9kYXRhJGxvY2F0aW9uc19zaXRlX25hbWVbbWF0Y2gobGF0X2RhdGEkR0lELGdlcm1pbmF0ZV9kYXRhJGdlbmVyYWxfaWRlbnRpZmllcildXG5sYXRfZGF0YSRsb2NhdGlvbnNfc2l0ZV9uYW1lW2xhdF9kYXRhJGxvY2F0aW9uc19zaXRlX25hbWU9PScnXSA9IE5BXG5cbmxhdF9kYXRhJGNvdW50cnkgPSBnZXJtaW5hdGVfZGF0YSRjb3VudHJpZXNfY291bnRyeV9uYW1lW21hdGNoKGxhdF9kYXRhJEdJRCxnZXJtaW5hdGVfZGF0YSRnZW5lcmFsX2lkZW50aWZpZXIpXVxuXG5cbmxpYnJhcnkoTUFTUylcbiMgaSA9ICFpcy5uYShsYXRfZGF0YSRsYXRfZmluYWxNYXQpXG4jIGxhdF9kYXRhJGZyYWN0aW9uID0gTkFcbiMgbGF0X2RhdGEkZnJhY3Rpb25baV0gPSBmcmFjdGlvbnMobGF0X2RhdGEkbGF0X2ZpbmFsTWF0W2ldIC0gZmxvb3IobGF0X2RhdGEkbGF0X2ZpbmFsTWF0W2ldKSlcbmZpbmFsTWF0JHNpdGVOYW1lID0gZ2VybWluYXRlX2RhdGEkbG9jYXRpb25zX3NpdGVfbmFtZVttYXRjaChmaW5hbE1hdCRTYW1wbGVJRCxnZXJtaW5hdGVfZGF0YSRgU2FtcGxlIElEIG9mIEROQSBmcm9tIHNpbmdsZSBwbGFudHMgdXNlZCBpbiBHV0FTYCldXG5cbnRjX2luZm8kc2l0ZU5hbWUgPSBnZXJtaW5hdGVfZGF0YSRsb2NhdGlvbnNfc2l0ZV9uYW1lW21hdGNoKHRjX2luZm8kQWNjR0lELGdlcm1pbmF0ZV9kYXRhJGdlbmVyYWxfaWRlbnRpZmllcildXG50Y19pbmZvJHNpdGVOYW1lW3RjX2luZm8kc2l0ZU5hbWUgPT0gJyddID0gTkFcblxuYGBgXG5gYGAifQ== --&gt;
+
+```r
+```r
+length(unique(dna_to_tc_gid$`AccessionGID (Germplasm ID at CIMMYT; General_identifier in Germinate)`))
 
 new_env_data = read_xlsx(&#39;../Downloaded_data/Passport/Maize climate data nov 2022 AEZ elevation by growing season and flowering period.xlsx&#39;)
 germinate_data = fread(&#39;../Germinate_data/germinatebase_03f36416-945c-4fa7-bc2d-b62377de40d5.txt&#39;,data.table=F)
@@ -2048,13 +2239,28 @@ finalMat$siteName = germinate_data$locations_site_name[match(finalMat$SampleID,g
 tc_info$siteName = germinate_data$locations_site_name[match(tc_info$AccGID,germinate_data$general_identifier)]
 tc_info$siteName[tc_info$siteName == &#39;&#39;] = NA
 </code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZG5hX3RvX3RjX2dpZCRsYXQgPSBuZXdfZW52X2RhdGEkTGF0TmV3W21hdGNoKGRuYV90b190Y19naWQkYEFjY2Vzc2lvbkdJRCAoR2VybXBsYXNtIElEIGF0IENJTU1ZVDsgR2VuZXJhbF9pZGVudGlmaWVyIGluIEdlcm1pbmF0ZSlgLG5ld19lbnZfZGF0YSRHSUQpXVxuYGBgIn0= -->
-<pre class="r"><code>dna_to_tc_gid$lat = new_env_data$LatNew[match(dna_to_tc_gid$`AccessionGID (Germplasm ID at CIMMYT; General_identifier in Germinate)`,new_env_data$GID)]</code></pre>
+<pre><code>
+&lt;!-- rnb-source-end --&gt;
+
+&lt;!-- rnb-chunk-end --&gt;
+
+
+&lt;!-- rnb-text-begin --&gt;
+
+
+
+&lt;!-- rnb-text-end --&gt;
+
+
+&lt;!-- rnb-chunk-begin --&gt;
+
+
+&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuZG5hX3RvX3RjX2dpZCRsYXQgPSBuZXdfZW52X2RhdGEkTGF0TmV3W21hdGNoKGRuYV90b190Y19naWQkYEFjY2Vzc2lvbkdJRCAoR2VybXBsYXNtIElEIGF0IENJTU1ZVDsgR2VuZXJhbF9pZGVudGlmaWVyIGluIEdlcm1pbmF0ZSlgLG5ld19lbnZfZGF0YSRHSUQpXVxuYGBgXG5gYGAifQ== --&gt;
+
+```r
+```r
+dna_to_tc_gid$lat = new_env_data$LatNew[match(dna_to_tc_gid$`AccessionGID (Germplasm ID at CIMMYT; General_identifier in Germinate)`,new_env_data$GID)]</code></pre>
+<p>```</p>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 </div>

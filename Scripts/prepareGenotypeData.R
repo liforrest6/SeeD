@@ -1,54 +1,64 @@
-##########################################
-# Prepare genotype data
+####################################################################################
+# Process genotype set for GEA analyses
 #
 # Author: Forrest Li
 # Functions for running analyses
-##########################################
+####################################################################################
 
 source(here::here('config.R'))
 
 ## 4692 SEEDGWAS with no repeat sequencing
 non_dup_acc = read.csv(here(genetic_data_dir, 'selected_genotypeIDs.csv'))
+colnames(non_dup_acc) = c('Unique.ID', 'Sample')
 ## CIMMYT climate data
 cimmyt = read_excel(here(env_data_dir, 'cimmyt_data.xlsx'), 
                     sheet = 'climate growing and fl season',
                     guess_max = 12000)
 ## Phenotyped genotypes mapping sheet
-blups = read_excel(here(phenotype_data_dir, 'Blups_01.xlsx'), sheet = 'DNA to TC GID')
+dna_to_tc_gid = read_excel(here(phenotype_data_dir, 'Blups_01.xlsx'), sheet = 'DNA to TC GID')
+# blups = as.data.frame(readxl::read_xlsx(here(phenotype_data_dir, 'Blups_01.xlsx'),sheet = 'Blups01',col_types = c(rep('text',11),'numeric')))
 
 ## 4020 unique Accession GID
-blups$`AccessionGID (Germplasm ID at CIMMYT; General_identifier in Germinate)` %>% unique() %>% length()
+dna_to_tc_gid$`AccessionGID (Germplasm ID at CIMMYT; General_identifier in Germinate)` %>% unique() %>% length()
 ## 4704 unique testcrosses
-blups$`TC GID` %>% unique() %>% length()
+dna_to_tc_gid$`TC GID` %>% unique() %>% length()
 ## 4710 unique SEEDGWAS IDs
-blups$`Sample ID`%>% unique() %>% length()
+dna_to_tc_gid$`Sample ID`%>% unique() %>% length()
 
 ## 4692 SEEDGWAS genotypes in blups file
-(non_dup_acc_GWAS_ID = blups[which(blups$`Sample ID`%in% non_dup_acc$Sample),])
+(non_dup_acc_GWAS_ID = dna_to_tc_gid[which(dna_to_tc_gid$`Sample ID`%in% non_dup_acc$Sample),])
+## there are five genotypes with no testcrosses whatsoever, keep for GEA anyways
+bad_testcrosses = non_dup_acc_GWAS_ID[which(!non_dup_acc_GWAS_ID$`Sample ID` %in% (subset(non_dup_acc_GWAS_ID, `TC GID` != 286910) %>% pull(`Sample ID`))),]
+## filter out TC GID 286910 for duplicate testcross, 4690
+non_dup_acc_GWAS_ID = subset(non_dup_acc_GWAS_ID, `TC GID` != 286910 | is.na(`TC GID`))
 
 ## confirmed 18 with repeat sequencing
-# blups[which(!blups$`Sample ID` %in% non_dup_acc$Sample),] 
+# dna_to_tc_gid[which(!dna_to_tc_gid$`Sample ID` %in% non_dup_acc$Sample),] 
 
 ## but only see one line for Sample ID, Accession ID, or TC GID
-# blups[which(blups$`Sample ID` == 'SEEDGWAS3234'),] 
-# blups[which(blups$`AccessionGID (Germplasm ID at CIMMYT; General_identifier in Germinate)`==24841),]
-# blups[which(blups$`TC GID` == '238738'),]
+# dna_to_tc_gid[which(dna_to_tc_gid$`Sample ID` == 'SEEDGWAS3234'),] 
+# dna_to_tc_gid[which(dna_to_tc_gid$`AccessionGID (Germplasm ID at CIMMYT; General_identifier in Germinate)`==24841),]
+# dna_to_tc_gid[which(dna_to_tc_gid$`TC GID` == '238738'),]
 
 ## 2895 accessions in CIMMYT climate with GID matching the Accession GID from non-duplicate genotypes
-finalAccessions = cimmyt[which(cimmyt$GID %in% non_dup_acc_GWAS_ID$`AccessionGID (Germplasm ID at CIMMYT; General_identifier in Germinate)`),]
+accessions = cimmyt[which(cimmyt$GID %in% non_dup_acc_GWAS_ID$`AccessionGID (Germplasm ID at CIMMYT; General_identifier in Germinate)`),]
 
-## 3520 genotypes with climate data from CIMMYT
-finalGenotypes = blups[which(blups$`AccessionGID (Germplasm ID at CIMMYT; General_identifier in Germinate)` %in% finalAccessions$GID),]
-finalGenotypes
+## 3516 genotypes with climate data from CIMMYT
+genotypes = non_dup_acc_GWAS_ID[which(non_dup_acc_GWAS_ID$`AccessionGID (Germplasm ID at CIMMYT; General_identifier in Germinate)` %in% accessions$GID),]
 
-finalMat = merge(finalGenotypes[, 1:5], 
-                 finalAccessions, 
+genotypeList = merge(genotypes[, 1:5], 
+                 accessions[, 1:6], 
                  by.x = 'AccessionGID (Germplasm ID at CIMMYT; General_identifier in Germinate)',
                  by.y = 'GID')
 
+genotypeList = merge(genotypeList,
+                     non_dup_acc,
+                     by.x = 'Sample ID',
+                     by.y = 'Sample')
 
-if(!file.exists(here(env_data_dir, 'GEA_finalGenotypeList.csv'))) {
-  write.csv(finalMat, here(env_data_dir, 'GEA_finalGenotypeList.csv'))
+
+if(file.exists(here(env_data_dir, 'GenotypesWithIDs.csv'))) {
+  write.csv(genotypeList, here(env_data_dir, 'GenotypesWithIDs.csv'), row.names = F)
 }
 
 
