@@ -49,12 +49,14 @@ ggplot(observed_comparison, aes(climate_values.x, climate_values.y, color = fact
   theme(axis.title.y = element_text(angle = 0, vjust = 0.5), text = element_text(size = 14))
 
 # correlation plot for just withheld data
-ggplot(observed_comparison %>% filter(isWithheld), aes(climate_values.x, climate_values.y, color = factor(isWithheld))) +
-  geom_point() +
+ggplot(observed_comparison %>% filter(isWithheld & climate_variables != 'rhMean'), aes(climate_values.x, climate_values.y, color = factor(isWithheld))) +
+  geom_point(show.legend = F) +
   scale_color_manual(values = c('red')) +
-  facet_wrap('climate_variables', scales = 'free') +
-  xlab('Control run') +
-  ylab('Prediction run') +
-  labs(color = 'Predicted accession') +
+  facet_wrap('climate_variables', scales = 'free', labeller = labeller(climate_variables = c())) +
+  xlab('Observed climate variable ranking') +
+  ylab('Predicted climate variable ranking') +
+  # labs(color = 'Predicted accession') +
   stat_cor(aes(label = ..rr.label..), color = 'blue', geom = 'label') +
-  ggtitle('Correlation between control and prediction run, just withheld accessions')
+  # ggtitle('Prediction correlation') +
+  theme(strip.text.x = element_text(size = 20),
+        axis.title = element_text(size = 20)) 

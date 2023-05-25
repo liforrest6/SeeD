@@ -34,10 +34,20 @@
 
 ### reads all GEA GWAS p-value results from transformed climate variable data
 ### RETURNS cumulative results from all chromosomes
+read_GEA_results = function(directory, pattern) {
+  GEA_results = bind_rows(lapply(list.files(directory, pattern = pattern, full.names = T), 
+                                  read.csv))
+  GEA_results = GEA_results[, c(3, 1, 2, 4, 9)]
+  colnames(GEA_results) = c('SNP', 'CHR', 'BP', 'maf', 'P')
+  GEA_results$fdr = p.adjust(GEA_results$P, method = 'BH')
+  return(GEA_results)
+}
+
+### reads all JOINT GWAS p-value results because formatting is wonky
 read_GWAS_results = function(directory, pattern) {
   GWAS_results = bind_rows(lapply(list.files(directory, pattern = pattern, full.names = T), 
                                   read.csv))
-  GWAS_results = GWAS_results[, c(3, 1, 2, 4, 9)]
+  GWAS_results = GWAS_results[, c(1, 2, 3, 6, 10)]
   colnames(GWAS_results) = c('SNP', 'CHR', 'BP', 'maf', 'P')
   GWAS_results$fdr = p.adjust(GWAS_results$P, method = 'BH')
   return(GWAS_results)
@@ -47,14 +57,14 @@ read_GWAS_results = function(directory, pattern) {
 ### RETURNS cumulative results from all chromosomes
 read_GWAS_effects = function(directory, pattern) {
   beta_hats = bind_rows(lapply(list.files(directory, pattern = pattern, full.names = T), 
-                               read_csv))
+                               read.csv))
   # beta_hats = cbind(clim_results, beta_hats)
   return(beta_hats)
 }
 
 read_GWAS_SEs = function(directory, pattern) {
   SEs = bind_rows(lapply(list.files(directory, pattern = pattern, full.names = T), 
-                         read_csv))
+                         read.csv))
   return(SEs)
 }
 
@@ -96,14 +106,14 @@ filter_SNP_results = function(gwas_results, snpDF) {
   return(gwas_results)
 }
 
-### adds v4 coordinates and name to GWAS result dataset
-### RETURNS same GWAS dataset, with v4 coordinates and name
-add_v4_coords = function(gwas_results, v4_coords) {
-  gwas_results = merge(gwas_results, v4_coords, by = 'SNP')
-  # create v4 SNP name for future analysis with different datasets
-  gwas_results$v4_SNP = paste0('S', gwas_results$CHR, '_', gwas_results$END)
-  return(gwas_results)
-}
+# ### adds v4 coordinates and name to GWAS result dataset
+# ### RETURNS same GWAS dataset, with v4 coordinates and name
+# add_v4_coords = function(gwas_results, v4_coords) {
+#   gwas_results = merge(gwas_results, v4_coords, by = 'SNP')
+#   # create v4 SNP name for future analysis with different datasets
+#   gwas_results$v4_SNP = paste0('S', gwas_results$CHR, '_', gwas_results$END)
+#   return(gwas_results)
+# }
 
 ## load results from clumping of GEA genes based on LD = 0.3 and specified p-value
 ## RETURNS dataframe of clumping results
@@ -116,9 +126,9 @@ load_clumped = function(pvalue = 1e-05) {
 
 ### function that processes the effect size and p-value results of each phenotype joint GWAS p-value result and effects
 ### RETURNS combined p-value and effect size dataframe, filtered for maf and calculated p-value
-process_GWAS = function(df_results, df_betas, mafDF) {
+process_GWAS = function(df_results, df_betas) {
   df_results = cbind(df_results, df_betas)
-  df_results = filter_SNP_results(df_results, mafDF)
+  # df_results = filter_SNP_results(df_results, mafDF)
   df_results$logp = -log10(df_results$P)
   return(df_results)
 }

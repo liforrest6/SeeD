@@ -7,7 +7,7 @@
 
 source(here::here('config.R'))
 
-gemma_results = read_GWAS_results(here(analyses_dir, 'GEA_output', 'multivariate_results'), 'envGWAS_results')
+clim_results = read_GEA_results(here(analyses_dir, 'GEA_output', 'multivariate_results'), 'envGWAS_results')
 
 gemma_dir = here('Analyses', 'GEA_output', 'GEMMA_univariate')
 traitN = 'precipTot'

@@ -6,13 +6,6 @@
 ####################################################################################
 
 
-
-library(ggplot2)
-library(GGally)
-library(ggfortify)
-library(ggmap)
-
-
 ## read CIMMYT 2023 data
 cimmyt = read_excel('/Users/liforrest/Documents/Projects/gea-adaptation/data/dataset/cimmyt_data.xlsx', 
                     sheet = 'climate growing and fl season',
@@ -78,6 +71,10 @@ cimmyt_grow$rhMean = cimmyt_grow %>% dplyr::select(starts_with('rhumav')) %>% ap
 cimmyt_elevation = tossOutAccessions(cimmyt_elevation, tossOutList)
 cimmyt_grow$elevation = cimmyt_elevation[match(cimmyt_grow$accid, cimmyt_elevation$accid),]$elevation
 
+if(!file.exists(here(env_data_dir, 'GEA-climate-nontransformed.csv'))) {
+  write.csv(cimmyt_grow, here(env_data_dir, 'GEA-climate-nontransformed.csv'), row.names = F)
+}
+
 ## dataframe using summary statistics that were already in CIMMYT dataset
 cimmyt_established = cimmyt_grow[,c('accid', 'GID', 'LatNew', 'LongNew',
                                     'Cropping season total pptn = 6m max',
@@ -110,3 +107,4 @@ finalMat_transform[2:8] = lapply(finalMat[2:8], FUN = invNormTransform)
 if(!file.exists(here(env_data_dir, 'GEA-climate-invnormtransformed.csv'))) {
   write.csv(finalMat_transform, here(env_data_dir, 'GEA-climate-invnormtransformed.csv'), row.names = F)
 }
+
