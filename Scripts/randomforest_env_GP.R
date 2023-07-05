@@ -1,10 +1,17 @@
-# how well does genomic prediction work within trials for each trait?
-# does it work better than PCs?
+####################################################################################
+# How well does random forest work for predicting phenotypic values?
+# Do environmental values work better than PCs?  Do testers determine all?
+#
+# Author: Forrest Li
+# Functions for running analyses
+####################################################################################
 library(data.table)
 library(dplyr)
 library(randomForest)
 library(foreach)
 library(doParallel)
+library(rrBLUP)
+library(ModelMetrics)
 registerDoParallel(4)
 
 source(here::here('config.R'))
@@ -16,12 +23,14 @@ run = as.numeric(strsplit(as.character(run),'')[[1]])
 # dataset = run[2]
 transform = run[1]
 traitN = run[2]
+ntree = run[3]
 
 if(is.na(transform)) transform = 1
 if(is.na(traitN)) traitN = 4
 
 transform = 1
 traitN = 4
+ntree = 200
 
 K = fread(here(genetic_data_dir, 'Imputed_V4', 'K_allChr.csv'),data.table=F)
 rownames(K) = K[,1]
@@ -35,33 +44,27 @@ trait = c("ASI","DaysToFlowering","FieldWeight","GrainWeightPerHectareCorrected"
 # data = subset(data,Trait == trait & !is.na(DNAID))
 
 finalMat = read.csv(here(env_data_dir, 'GEA-climate-invnormtransformed.csv'))
+
+filt_df = read.csv(here(env_data_dir, 'central_mexican_accessions.csv'))
+# finalMat = finalMat %>% filter(Unique.ID %in% filt_df$Unique.ID.Mex)
 just_clim = finalMat[-c(1)]
 blup_phenotypes = read.csv(here(phenotype_data_dir, 'blups_std.csv'))
 finalMat$SampleID = str_split_i(finalMat$Unique.ID, ':', i = 1)
-# envMat = separate(data = finalMat, col = Unique.ID, into = c('SampleID', 'Unique.ID'), sep = ':', remove = F)
 
 phenotypes_env = blup_phenotypes %>% filter(SampleID %in% finalMat$SampleID) %>% merge(finalMat, by = 'SampleID')
 data = phenotypes_env
 
 ## this is 5-fold cross-validation within each trial
 results = foreach(exp = unique(data$Experimento),.combine = bind_rows, .errorhandling = 'remove') %dopar% {
-  
-  # for(exp in unique(data$Experimento)) {
+  exp = 'm2012BEB'
+
   data_env = subset(data,Experimento == exp & Trait == trait)
-  # if(dim(data_env)[1] == 0) {
-  #   next
-  # }
-  ## this does INT transform but everything should already have been done
-  # if(transform == 2) {
-  #   x = data_env$Value
-  #   data_env$Value = qnorm((rank(x,na.last="keep")-0.5)/sum(!is.na(x)),mean(x,na.rm=T),sd(x,na.rm=T))
-  # }
+  residuals = resid(lm(Value ~ Tester, data = data_env))
+  data_env$residuals = unname(residuals)
+
 
   K_env = K[data_env$Unique.ID,data_env$Unique.ID]
   sK = svd(K_env)
-
-  # X = model.matrix(~Tester,data_env)
-  # X_PC = cbind(X,sK$u[,1:10])
 
   folds = caret::createFolds(data_env$Value,k=5)
 
@@ -70,24 +73,24 @@ results = foreach(exp = unique(data$Experimento),.combine = bind_rows, .errorhan
     fold_indices = rownames(data_env)[folds[[i_fold]]]
     data_train = data_env[!rownames(data_env) %in% fold_indices,]
     data_test = data_env[rownames(data_env) %in% fold_indices,]
-    y_train = data_train$Value
-    y_test = data_test$Value
+    y_train = data_train$residuals
+    y_test = data_test$residuals
     
     testerForest = randomForest(x = data_train %>% select(Tester), y = y_train,
                                 ntree=200,
                                 importance=TRUE)
     tester_res_X = predict(testerForest, newdata = data_test %>% select(Tester))
-    
-    residuals = resid(lm(Value ~ Tester, data = data_env))
-    resid_train = data.frame(residuals[!names(residuals) %in% fold_indices])
-    resid_test = data.frame(residuals[names(residuals) %in% fold_indices])
-    colnames(resid_train) = 'residual'
-    colnames(resid_test) = 'residual'
+    # 
+    # 
+    # resid_train = data.frame(residuals[!names(residuals) %in% fold_indices])
+    # resid_test = data.frame(residuals[names(residuals) %in% fold_indices])
+    # colnames(resid_train) = 'residual'
+    # colnames(resid_test) = 'residual'
 
-    testerResidForest = randomForest(x = resid_train, y = y_train,
-                                ntree=200,
-                                importance=TRUE)
-    testerResid_res_X = predict(testerResidForest, newdata = resid_test)
+    # testerResidForest = randomForest(x = resid_train, y = y_train,
+    #                             ntree=200,
+    #                             importance=TRUE)
+    # testerResid_res_X = predict(testerResidForest, newdata = resid_test)
     
     PC5_Forest = randomForest(x = sK$u[-folds[[i_fold]],1:5], y = y_train,
                               ntree=200,
@@ -99,15 +102,15 @@ results = foreach(exp = unique(data$Experimento),.combine = bind_rows, .errorhan
                               importance=TRUE)
     PC10_res_X = predict(PC10_Forest, newdata = sK$u[folds[[i_fold]],1:10])
     
-    PC5_testerForest = randomForest(x = cbind(data_train %>% select(Tester), sK$u[-folds[[i_fold]],1:5]), y = y_train,
-                              ntree=200,
-                              importance=TRUE)
-    PC5_tester_res_X = predict(PC5_testerForest, newdata = cbind(data_test %>% select(Tester),sK$u[folds[[i_fold]],1:5]))
-    
-    PC10_testerForest = randomForest(x = cbind(data_train %>% select(Tester), sK$u[-folds[[i_fold]],1:10]), y = y_train,
-                               ntree=200,
-                               importance=TRUE)
-    PC10_tester_res_X = predict(PC10_testerForest, newdata = cbind(data_test %>% select(Tester),sK$u[folds[[i_fold]],1:10]))
+    # PC5_testerForest = randomForest(x = cbind(data_train %>% select(Tester), sK$u[-folds[[i_fold]],1:5]), y = y_train,
+    #                           ntree=200,
+    #                           importance=TRUE)
+    # PC5_tester_res_X = predict(PC5_testerForest, newdata = cbind(data_test %>% select(Tester),sK$u[folds[[i_fold]],1:5]))
+    # 
+    # PC10_testerForest = randomForest(x = cbind(data_train %>% select(Tester), sK$u[-folds[[i_fold]],1:10]), y = y_train,
+    #                            ntree=200,
+    #                            importance=TRUE)
+    # PC10_tester_res_X = predict(PC10_testerForest, newdata = cbind(data_test %>% select(Tester),sK$u[folds[[i_fold]],1:10]))
     
     env_Forest = randomForest(x = data_train %>% 
                                           select(tmin, tmax, trange, precipTot, aridityMean, rhMean, elevation), 
@@ -125,27 +128,47 @@ results = foreach(exp = unique(data$Experimento),.combine = bind_rows, .errorhan
     envPC_res_X = predict(envPC_Forest, newdata = cbind(data_test %>% 
                                                       select(tmin, tmax, trange, precipTot, aridityMean, rhMean, elevation),sK$u[folds[[i_fold]],1:5]))
     
-    allForest = randomForest(x = cbind(data_train %>% 
-                                                select(Tester, tmin, tmax, trange, precipTot, aridityMean, rhMean, elevation), sK$u[-folds[[i_fold]],1:5]), 
-                                    y = y_train,
-                                    ntree=200,
-                                    importance=TRUE)
-    all_res_X = predict(allForest, newdata = cbind(data_test %>% 
-                                               select(Tester, tmin, tmax, trange, precipTot, aridityMean, rhMean, elevation),sK$u[folds[[i_fold]],1:5]))
+    # allForest = randomForest(x = cbind(data_train %>% 
+    #                                             select(Tester, tmin, tmax, trange, precipTot, aridityMean, rhMean, elevation), sK$u[-folds[[i_fold]],1:5]), 
+    #                                 y = y_train,
+    #                                 ntree=200,
+    #                                 importance=TRUE)
+    # all_res_X = predict(allForest, newdata = cbind(data_test %>% 
+    #                                            select(Tester, tmin, tmax, trange, precipTot, aridityMean, rhMean, elevation),sK$u[folds[[i_fold]],1:5]))
+    # 
     
+    X = model.matrix(~Tester,data_env)
+    y = data_env$residuals
+    y[folds[[i_fold]]] = NA
+
+    dropcols = caret::findLinearCombos(X[!rownames(data_env) %in% fold_indices,])
+    if(length(dropcols$remove) > 0) {
+      X = X[,-dropcols$remove]
+    }
+    
+    lm_K_res_X = mixed.solve(y,X = X,K=K_env)
+    lm_env_res_X = mixed.solve(y, X = cbind(X, data_env %>% 
+                                              select(tmin, tmax, trange, precipTot, aridityMean, rhMean, elevation)))
+    lm_PC5_res_X = mixed.solve(y, X = cbind(X,sK$u[,1:5]))
 
     
-    baseline = cor(y_test, env_res_X)^2
+    baseline = cor(y_test, tester_res_X)^2
     data.frame(Experimento = exp, fold = i_fold,
                tester = cor(y_test, tester_res_X)^2 - baseline,
-               testerResid = cor(y_test, testerResid_res_X)^2 - baseline,
+               # testerResid = cor(y_test, testerResid_res_X)^2 - baseline,
                PC5 = cor(y_test, PC5_res_X)^2 - baseline,
                PC10 = cor(y_test, PC10_res_X)^2 - baseline,
-               tester_PC5 = cor(y_test, PC5_tester_res_X)^2 - baseline,
-               tester_PC10 = cor(y_test, PC10_tester_res_X)^2 - baseline,
+               # tester_PC5 = cor(y_test, PC5_tester_res_X)^2 - baseline,
+               # tester_PC10 = cor(y_test, PC10_tester_res_X)^2 - baseline,
                env = cor(y_test, env_res_X)^2 - baseline,
                envPC = cor(y_test, envPC_res_X)^2 - baseline,
-               allVar = cor(y_test, all_res_X)^2 - baseline)
+               lm_K = cor(cbind(data_env$residuals,c(X %*% lm_K_res_X$beta) + lm_K_res_X$u)[folds[[i_fold]],])[2] - baseline,
+               lm_PC5 = cor(cbind(data_env$residuals,cbind(X,sK$u[,1:5]) %*% lm_PC5_res_X$beta)[folds[[i_fold]],])[2] - baseline,
+               lm_env = cor(cbind(data_env$residuals,
+                                  as.matrix(cbind(X,data_env %>% select(tmin, tmax, trange, precipTot, aridityMean, rhMean, elevation))) 
+                                  %*% lm_env_res_X$beta)[folds[[i_fold]],])[2] - baseline
+               # allVar = cor(y_test, all_res_X)^2 - baseline
+               )
     
   }
   env_results
@@ -156,10 +179,11 @@ results = foreach(exp = unique(data$Experimento),.combine = bind_rows, .errorhan
 
 ## this is cross-fold with OOB testing for each tester (test cross-tester predictive ability)
 tester_results = foreach(exp = unique(data$Experimento),.combine = bind_rows, .errorhandling = 'remove') %dopar% {
-  # exp = 'm2012BCH'
-  # tester = 'CML269/CML264'
+  exp = 'm2012BCH'
+  tester = 'CML269/CML264'
   data_env = subset(data,Experimento == exp & Trait == trait)
-
+  residuals = resid(lm(Value ~ Tester, data = data_env))
+  data_env$residuals = residuals
   ## this does INT transform but everything should already have been done
   # if(transform == 2) {
   #   x = data_env$Value
@@ -169,21 +193,25 @@ tester_results = foreach(exp = unique(data$Experimento),.combine = bind_rows, .e
   ## calculate PCs from subset of accessions
   K_env = K[data_env$Unique.ID,data_env$Unique.ID]
   sK = svd(K_env)
-
+  
+  # X = model.matrix(~Tester,data_env)
+  # y = data_env$residuals
+  # y[fold_indices] = NA
 
   ## withholding one tester per fold
   fold_result = foreach(tester = unique(data_env$Tester),.combine=bind_rows) %do% {
-
+    # X = model.matrix(~Tester,data_env)
+    
     fold_indices = data_env$Tester == tester
     data_train = data_env[!data_env$Tester == tester,]
     data_test = data_env[data_env$Tester == tester,]
-    y_train = data_train$Value
-    y_test = data_test$Value
+    y_train = data_train$residuals
+    y_test = data_test$residuals
     
-    # testerForest = randomForest(x = data_train %>% select(Tester), y = y_train,
-    #                             ntree=200,
-    #                             importance=TRUE)
-    # tester_res_X = predict(testerForest, newdata = data_test %>% select(Tester))
+    testerForest = randomForest(x = data_train %>% select(Tester), y = y_train,
+                                ntree=200,
+                                importance=TRUE)
+    tester_res_X = predict(testerForest, newdata = data_test %>% select(Tester))
     
     PC5_Forest = randomForest(x = sK$u[!fold_indices,1:5], y = y_train,
                               ntree=200,
@@ -195,15 +223,15 @@ tester_results = foreach(exp = unique(data$Experimento),.combine = bind_rows, .e
                                importance=TRUE)
     PC10_res_X = predict(PC10_Forest, newdata = sK$u[fold_indices,1:10])
     
-    PC5_testerForest = randomForest(x = cbind(data_train %>% select(Tester), sK$u[!fold_indices,1:5]), y = y_train,
-                                    ntree=200,
-                                    importance=TRUE)
-    PC5_tester_res_X = predict(PC5_testerForest, newdata = cbind(data_test %>% select(Tester),sK$u[fold_indices,1:5]))
-
-    PC10_testerForest = randomForest(x = cbind(data_train %>% select(Tester), sK$u[!fold_indices,1:10]), y = y_train,
-                                     ntree=200,
-                                     importance=TRUE)
-    PC10_tester_res_X = predict(PC10_testerForest, newdata = cbind(data_test %>% select(Tester),sK$u[fold_indices,1:10]))
+    # PC5_testerForest = randomForest(x = cbind(data_train %>% select(Tester), sK$u[!fold_indices,1:5]), y = y_train,
+    #                                 ntree=200,
+    #                                 importance=TRUE)
+    # PC5_tester_res_X = predict(PC5_testerForest, newdata = cbind(data_test %>% select(Tester),sK$u[fold_indices,1:5]))
+    # 
+    # PC10_testerForest = randomForest(x = cbind(data_train %>% select(Tester), sK$u[!fold_indices,1:10]), y = y_train,
+    #                                  ntree=200,
+    #                                  importance=TRUE)
+    # PC10_tester_res_X = predict(PC10_testerForest, newdata = cbind(data_test %>% select(Tester),sK$u[fold_indices,1:10]))
     
     env_Forest = randomForest(x = data_train %>% 
                                 select(tmin, tmax, trange, precipTot, aridityMean, rhMean, elevation), 
@@ -221,24 +249,65 @@ tester_results = foreach(exp = unique(data$Experimento),.combine = bind_rows, .e
     envPC_res_X = predict(envPC_Forest, newdata = cbind(data_test %>% 
                                                           select(tmin, tmax, trange, precipTot, aridityMean, rhMean, elevation),sK$u[fold_indices,1:5]))
     
-    allForest = randomForest(x = cbind(data_train %>% 
-                                         select(Tester, tmin, tmax, trange, precipTot, aridityMean, rhMean, elevation), sK$u[!fold_indices,1:5]), 
-                             y = y_train,
-                             ntree=200,
-                             importance=TRUE)
-    all_res_X = predict(allForest, newdata = cbind(data_test %>% 
-                                                     select(Tester, tmin, tmax, trange, precipTot, aridityMean, rhMean, elevation),sK$u[fold_indices,1:5]))
+    # allForest = randomForest(x = cbind(data_train %>% 
+    #                                      select(Tester, tmin, tmax, trange, precipTot, aridityMean, rhMean, elevation), sK$u[!fold_indices,1:5]), 
+    #                          y = y_train,
+    #                          ntree=200,
+    #                          importance=TRUE)
+    # all_res_X = predict(allForest, newdata = cbind(data_test %>% 
+    #                                                  select(Tester, tmin, tmax, trange, precipTot, aridityMean, rhMean, elevation),sK$u[fold_indices,1:5]))
+    X = model.matrix(~Tester,data_env)
+    y = data_env$residuals
+    dropcols = caret::findLinearCombos(X[!fold_indices,])
+    X_tester = X
+    if(length(dropcols$remove) > 0) {
+      X_tester = X[,-dropcols$remove]
+    }
     
-    baseline = cor(y_test, env_res_X)^2
+    
+    y[fold_indices] = NA
+    lm_K_res_X = mixed.solve(y,X = X_tester,K=K_env)
+    lm_env_res_X = mixed.solve(y, X = cbind(X_tester, data_env %>% 
+                                              select(tmin, tmax, trange, precipTot, aridityMean, rhMean, elevation)))
+    lm_PC5_res_X = mixed.solve(y, X = cbind(X_tester,sK$u[,1:5]))
+    
+    # lm_K_res_X = mixed.solve(y,X = X,K=K_env)
+    # lm_env_res_X = mixed.solve(y, X = cbind(X, data_env %>% 
+    #                                           select(tmin, tmax, trange, precipTot, aridityMean, rhMean, elevation)))
+    # lm_PC5_res_X = mixed.solve(y, X = cbind(X,sK$u[,1:5]))
+    
+    baseline = rmse(y_test, tester_res_X)
+    # data.frame(Experimento = exp, fold = tester,
+    #            rf_tester = cor(y_test, tester_res_X)^2,
+    #            rf_PC5 = cor(y_test, PC5_res_X)^2 - baseline,
+    #            rf_PC10 = cor(y_test, PC10_res_X)^2 - baseline,
+    #            # tester_PC5 = cor(y_test, PC5_tester_res_X)^2 - baseline,
+    #            # tester_PC10 = cor(y_test, PC10_tester_res_X)^2 - baseline,
+    #            rf_env = cor(y_test, env_res_X)^2 - baseline,
+    #            rf_envPC = cor(y_test, envPC_res_X)^2 - baseline,
+    #            # allVar = cor(y_test, all_res_X)^2 - baseline
+    #            lm_K = cor(cbind(data_env$residuals,c(X_tester %*% lm_K_res_X$beta) + lm_K_res_X$u)[fold_indices,])[2]^2 - baseline,
+    #            lm_PC5 = cor(cbind(data_env$residuals,cbind(X_tester,sK$u[,1:5]) %*% lm_PC5_res_X$beta)[fold_indices,])[2]^2 - baseline,
+    #            lm_env = cor(cbind(data_env$residuals,
+    #                               as.matrix(cbind(X_tester,data_env %>% select(tmin, tmax, trange, precipTot, aridityMean, rhMean, elevation))) 
+    #                               %*% lm_env_res_X$beta)[fold_indices,])[2]^2 - baseline
+    # )
+    
     data.frame(Experimento = exp, fold = tester,
-               # tester = cor(y_test, tester_res_X),
-               PC5 = cor(y_test, PC5_res_X)^2 - baseline,
-               PC10 = cor(y_test, PC10_res_X)^2 - baseline,
-               tester_PC5 = cor(y_test, PC5_tester_res_X)^2 - baseline,
-               tester_PC10 = cor(y_test, PC10_tester_res_X)^2 - baseline,
-               env = cor(y_test, env_res_X)^2 - baseline,
-               envPC = cor(y_test, envPC_res_X)^2 - baseline,
-               allVar = cor(y_test, all_res_X)^2 - baseline)
+               rf_tester = rmse(y_test, tester_res_X),
+               rf_PC5 = rmse(y_test, PC5_res_X),
+               rf_PC10 = rmse(y_test, PC10_res_X),
+               # tester_PC5 = cor(y_test, PC5_tester_res_X)^2 - baseline,
+               # tester_PC10 = cor(y_test, PC10_tester_res_X)^2 - baseline,
+               rf_env = rmse(y_test, env_res_X),
+               rf_envPC = rmse(y_test, envPC_res_X),
+               # allVar = cor(y_test, all_res_X)^2 - baseline
+               lm_K = rmse(y_test, (c(X_tester %*% lm_K_res_X$beta) + lm_K_res_X$u)[fold_indices]),
+               lm_PC5 = rmse(y_test, (cbind(X_tester,sK$u[,1:5]) %*% lm_PC5_res_X$beta)[fold_indices]) ,
+               lm_env = rmse(y_test,
+                                  (as.matrix(cbind(X_tester,data_env %>% select(tmin, tmax, trange, precipTot, aridityMean, rhMean, elevation))) 
+                                  %*% lm_env_res_X$beta)[fold_indices])
+    )
     
   }
   fold_result
@@ -301,16 +370,16 @@ tester_results = foreach(exp = unique(data$Experimento),.combine = bind_rows, .e
 # dev.off()
 
 
-results_long = pivot_longer(results, cols = c(tester, testerResid, PC5, PC10, tester_PC5, tester_PC10, env, envPC, allVar), names_to = 'model')
+results_long = pivot_longer(results, cols = c(tester, PC5, PC10, env, envPC, lm_K, lm_PC5, lm_env), names_to = 'model')
 ggplot(results_long, aes(x = model, y = value, color = model)) +
   geom_violin() +
   facet_wrap(facets = 'Experimento') +
-  ylab('Predictive accuracy (r^2)') +
-  ggtitle('5-fold models improvement over env variable model')
+  ylab('Predictive accuracy (r^2) improvement') +
+  ggtitle('5-fold models improvement over tester variable model')
 
-tester_results_long = pivot_longer(tester_results, cols = c(PC5, PC10, tester_PC5, tester_PC10, env, envPC, allVar), names_to = 'model')
+tester_results_long = pivot_longer(tester_results, cols = c(rf_tester, rf_PC5, rf_PC10, rf_env, rf_envPC, lm_K, lm_PC5, lm_env), names_to = 'model')
 ggplot(tester_results_long, aes(x = model, y = value, color = model)) +
   geom_violin() +
   facet_wrap(facets = 'Experimento') +
   ylab('Predictive accuracy (r^2)') +
-  ggtitle('Tester fold models improvement over env variable model')
+  ggtitle('Tester fold models improvement over tester variable model')
