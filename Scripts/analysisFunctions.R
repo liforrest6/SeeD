@@ -140,7 +140,7 @@ compare_GWAS_effects = function(df, top_hits, gea = F) {
   if(gea == F) {
     df$maf_factor = cut(df$maf, breaks = seq(0, 0.50001, 0.025), include.lowest = T, right = F)
   } else if(gea == T) {
-    df$maf_factor = cut(df$maf.gea, breaks = seq(0, 0.50001, 0.025), include.lowest = T, right = F)
+    df$maf_factor = cut(df$maf, breaks = seq(0, 0.50001, 0.025), include.lowest = T, right = F)
   }
   df$is_top_hit = df$SNP %in% top_hits
   

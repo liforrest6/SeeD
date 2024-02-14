@@ -15,10 +15,6 @@ gea_beta_hats = cbind(gea_results, gea_beta_hats)
 
 top_hits_clumped = load_clumped()$SNP
 
-qqman::qq(gea_results$P, main = 'qqplot, maf > 0.01')
-
-qqman::qq(gea_results %>% filter(maf > 0.05) %>% pull(P), main = 'qqplot, maf > 0.05')
-
 ## read phenotypic joint GWAS results and effect sizes
 {
   dtf_results = read_GWAS_results(here(analyses_dir, 'JointGWAS', 'DaysToFlowering', 'JointGWAS_output'), 'GWAS_results')
@@ -155,5 +151,19 @@ for(trait in phenotypes) {
   }
 }
  
-write.csv(trial_trait_table, here(phenotype_data_dir, 'Accessions_per_trial_per_trait.csv'))
+write.csv(trial_trait_table, here(phenotype_data_dir, 'accessions_per_trial_per_trait.csv'))
           
+
+####################################################################################
+## Just print out samples of matched SNPs and be done with this farce
+####################################################################################
+gea_matching_samples = as.data.frame(replicate(20, compare_GWAS_effects(gea_results, top_hits_clumped, gea = T) %>% filter(matching == T) %>% pull(SNP)))
+write.table(gea_matching_samples, here(genetic_data_dir, 'gea_matching_sampled_SNPs.txt'), col.names = F, row.names = F)
+
+## print out GEA SNPs under 1e-2 p-value for plink clumping and LD analysis
+SNP_LD = gea_results %>% filter(P < 1e-2) %>% select(SNP)
+write.csv(SNP_LD, 'Analyses/GEA_output/multivariate_results/GEA_SNP_1e2_forplink.txt', row.names = F, quote = F)
+
+plink_analysis = fread('Analyses/GEA_output/multivariate_results/clumped/plink/LD-analysis.ld')
+
+manual_manhattan(gea_results, plink_analysis$SNP_B, chr_filter = 7)

@@ -33,6 +33,33 @@ filt_acc$Unique.ID
 
 filt_df = as.data.frame(filt_acc$Unique.ID)
 colnames(filt_df) = c('Unique.ID.Mex')
-write.csv(filt_df, 'Env_data/central_mexican_accessions.csv')
+# write.csv(filt_df, 'Env_data/central_mexican_accessions.csv')
+
+all_coords = cimmyt[1:9] %>% st_as_sf(coords = c('LongNew', 'LatNew'),
+                                      crs = '+proj=longlat +datum=WGS84 +ellps=WGS84') 
+all_coords = cimmyt[1:9]
+terrain_kernels <- get_stamenmap( bbox = c(left = -120, bottom = -50, right = -33, top = 33), 
+                                  zoom = 4, maptype = "terrain-background")
+
+ggmap(terrain_kernels)+
+  geom_point(data = all_coords, 
+             aes(x = LongNew, y = LatNew, color = AltM),
+             pch=16,alpha=0.2,size=1) + 
+  scale_color_continuous(name = "Elevation (m)", low = 'black', high = 'red') +
+  theme(axis.ticks.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.y = element_blank(),
+        plot.title = element_text(size = 16)) +
+  # ggtitle("Geo-coordinates for CIMMYT data", ) +
+  xlab("") +
+  ylab("")
+
+
+
+terrain_kernels <- get_stamenmap( bbox = c(left = -120, bottom = -40, right = -35, top = 33), 
+                                  zoom = 4, maptype = "toner-lite", color = 'bw', messaging = F)
+
+
 
 
