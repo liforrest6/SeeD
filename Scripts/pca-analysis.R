@@ -26,7 +26,7 @@ autoplot( geno_pca, data = cimmyt_grow, colour = 'elevation')
 
 
 (geno_biplot = autoplot( geno_pca, data = cimmyt_grow, color = 'tmax'))
-png(here(plot_dir, 'Manuscript', 'supp2-geno_biplot.png'), width = 491, height = 491)
+png(here(plot_dir, 'Manuscript', 'geno_biplot.png'), width = 491, height = 491)
 print(geno_biplot)
 dev.off()
 
@@ -37,7 +37,7 @@ var_explained = geno_pca$sdev^2 / sum(geno_pca$sdev^2)
   ylab('Genetic variance explained') +
   ggtitle('Scree plot of population accessions') +
   ylim(0, max(var_explained)))
-png(here(plot_dir, 'Manuscript', 'supp3-screeplot.png'), width = 491, height = 491)
+png(here(plot_dir, 'Manuscript', 'scree_plot.png'), width = 491, height = 491)
 print(scree_plot)
 dev.off()
 

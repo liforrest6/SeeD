@@ -35,15 +35,27 @@
 ### reads all GEA GWAS p-value results from transformed climate variable data
 ### RETURNS cumulative results from all chromosomes
 read_GEA_results = function(directory, pattern) {
-  GEA_results = bind_rows(lapply(list.files(directory, pattern = pattern, full.names = T), 
-                                  read.csv))
+  GEA_results = data.frame(data.table::rbindlist(lapply(list.files(directory, pattern = pattern, full.names = T), 
+                                  fread), use.names = T))
   GEA_results = GEA_results[, c(3, 1, 2, 4, 9)]
   colnames(GEA_results) = c('SNP', 'CHR', 'BP', 'maf', 'P')
   GEA_results$fdr = p.adjust(GEA_results$P, method = 'BH')
   return(GEA_results)
 }
 
-### reads all JOINT GWAS p-value results because formatting is wonky
+### reads all JOINT GWAS p-value results because formatting is wonky - for std blups
+read_GWAS_results_std = function(directory, pattern) {
+  GWAS_results = data.frame(data.table::rbindlist(lapply(list.files(directory, pattern = pattern, full.names = T), 
+                                  fread), use.names = T))
+  GWAS_results = GWAS_results[, c(1, 2, 3, 6, 9, 10, 11, 12, 13)]
+  colnames(GWAS_results) = c('SNP', 'CHR', 'BP', 'maf', 'X.Experimento..Df', 'X..Fvalue', 'X.Experimento..Fvalue', 'X..Pvalue', 'X.Experimento..Pvalue')
+  ## calculate Fisher's P-value using chi-squared, 2*k treatments, based on main effect Pvalue and interaction effect Pvalue
+  GWAS_results$fisherP = pchisq(-2*(log(GWAS_results$X.Experimento..Pvalue)+log(GWAS_results$X..Pvalue)),df=4,lower.tail=F)
+  GWAS_results$fdr = p.adjust(GWAS_results$fisherP, method = 'BH')
+  return(GWAS_results)
+}
+
+### reads JOINT GWAS p-value results for deregressed blups
 read_GWAS_results = function(directory, pattern) {
   GWAS_results = bind_rows(lapply(list.files(directory, pattern = pattern, full.names = T), 
                                   read.csv))
@@ -53,28 +65,29 @@ read_GWAS_results = function(directory, pattern) {
   return(GWAS_results)
 }
 
+
 ### reads all GEA GWAS effect size results (beta hats) from transformed climate variable data
 ### RETURNS cumulative results from all chromosomes
 read_GWAS_effects = function(directory, pattern) {
-  beta_hats = bind_rows(lapply(list.files(directory, pattern = pattern, full.names = T), 
-                               read.csv))
+  beta_hats = data.frame(data.table::rbindlist(lapply(list.files(directory, pattern = pattern, full.names = T), 
+                               fread), use.names = T))
   # beta_hats = cbind(clim_results, beta_hats)
   return(beta_hats)
 }
 
 read_GWAS_SEs = function(directory, pattern) {
-  SEs = bind_rows(lapply(list.files(directory, pattern = pattern, full.names = T), 
-                         read.csv))
+  SEs = data.frame(data.table::rbindlist(lapply(list.files(directory, pattern = pattern, full.names = T), 
+                         fread), use.names = T))
   return(SEs)
 }
 
 read_GEMMA_results = function(directory, traitN, pattern) {
   gemma_directory = file.path(directory, traitN, 'rep_01')
-  gemma_results = bind_rows(lapply(list.files(gemma_directory, pattern = pattern, full.names = T), 
-                   read.csv))
+  gemma_results = data.frame(data.table::rbindlist(lapply(list.files(gemma_directory, pattern = pattern, full.names = T), 
+                   fread), use.names = T))
   # gemma_results = read.csv(file.path(directory, traitN, 'rep_01', 'p_wald_chr04.txt'))
   gemma_results = separate(data = gemma_results,
-                           col = X, into = c('Chr', 'BP'), , sep = '_', remove = F)[c('X', 'Chr', 'BP', traitN)]
+                           col = V1, into = c('Chr', 'BP'), , sep = '_', remove = F)[c('V1', 'Chr', 'BP', traitN)]
   gemma_results$Chr = as.numeric(gsub('S', '', gemma_results$Chr))
   gemma_results$BP = as.numeric(gemma_results$BP)
   return(gemma_results)
@@ -129,7 +142,8 @@ load_clumped = function(pvalue = 1e-05) {
 process_GWAS = function(df_results, df_betas) {
   df_results = cbind(df_results, df_betas)
   # df_results = filter_SNP_results(df_results, mafDF)
-  df_results$logp = -log10(df_results$P)
+  df_results$logP = -log10(df_results$P)
+  # df_results$logFisherP = -log10(df_results$fisherP)
   return(df_results)
 }
 
@@ -175,7 +189,7 @@ compare_GWAS_effects = function(df, top_hits, gea = F) {
 merge_JGWAS_GEA = function(jgwas, gea) {
   # result_df = merge(gea[c('SNP', 'CHR', 'BP', 'maf', 'P', 'altitude..X', 'meanTemp..X', 'annualPrecipitation..X')],
   result_df = merge(gea,
-                    jgwas %>% dplyr::select(c(starts_with('Experiment'), 'SNP', 'maf', 'P', 'logp')),
+                    jgwas %>% dplyr::select(c(starts_with('Experiment'), 'SNP', 'maf', 'P', 'logP')),
                     by = 'SNP', suffixes = c('.gea', '.jgwas'))
   return(result_df)
 }
