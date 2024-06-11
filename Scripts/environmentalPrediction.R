@@ -67,16 +67,16 @@ ggplot(observed_comparison, aes(climate_values.x, climate_values.y, color = fact
 ###################################################################################################
 ## perform for k-fold testing
 ###################################################################################################
-results = list()
+environmental_prediction_results = list()
 for(i in 1:5) {
   U_hat = read.csv(here::here(analyses_dir, 'MegaLMM_output', 'dataset_clim-prediction-rep_05', sprintf('U_hat-rep_05-fold_%02d.csv', i)), row.names = 1)
   withheld = read.csv(here(analyses_dir, 'MegaLMM_output', 'dataset_clim-prediction-rep_05', sprintf('withheld-accessions-rep_05-fold_%02d.csv', i)), header = T)
   U_hat$SampleID = str_split_i(rownames(U_hat), '::', 1)
   U_hat = U_hat %>% filter(SampleID %in% withheld$validationIDs)
-  results[[i]] = U_hat
+  environmental_prediction_results[[i]] = U_hat
 }
 
-combined = bind_rows(results)
+combined = bind_rows(environmental_prediction_results)
 
 # combined = read.csv(here::here(analyses_dir, 'MegaLMM_output', 'dataset_clim-prediction-rep_05', 'U_hat-rep_05-combined.csv'), row.names = 1)
 # U_hat = read.csv(here::here(analyses_dir, 'MegaLMM_output', 'dataset_clim-prediction-rep_05', 'U_hat-rep_05-fold_05.csv'), row.names = 1)
@@ -89,7 +89,7 @@ variables = c('tmin', 'tmax', 'trange', 'precipTot', 'aridityMean', 'rhMean', 'e
 U_hat = U_hat[match(finalMat$Unique.ID, U_hat$SampleID),]
 colnames(finalMat) = c('SampleID', variables)
 GEA_enriched = read.csv(here('Genetic_data/Imputed_V4/GEA_clumped_SNPs_genotype.csv'))
-finalMat = merge(finalMat, GEA_enriched, by.x = 'SampleID', by.y = 'X')
+finalMat_genotype = merge(finalMat, GEA_enriched, by.x = 'SampleID', by.y = 'X')
 
 
 observed_comparison = merge(combined %>% 
@@ -98,7 +98,7 @@ observed_comparison = merge(combined %>%
                                 names_to = 'climate_variables',
                                 values_to = 'climate_values'
                               ),
-                            finalMat %>% 
+                            finalMat_genotype %>% 
                               pivot_longer(
                                 cols = variables,
                                 names_to = 'climate_variables',
@@ -123,7 +123,7 @@ observed_comparison = merge(combined %>%
 (enviromental_prediction_allele = ggplot(observed_comparison %>% filter(climate_variables != 'rhMean'), 
                                    aes(climate_values.x, climate_values.y,
                                        color = S9_148365695)) +
-    geom_point(size = 0.5) +
+    geom_point(size = 0.3) +
     scale_color_continuous(low = 'red', high = 'blue') +
     facet_wrap('climate_variables', scales = 'free', labeller = labeller(climate_variables = c())) +
     xlab('Predicted climate variable ranking') +
@@ -216,56 +216,187 @@ res_spclust = foreach(trait=variables, .combine = rbind) %:%
       data.frame(fold = i_fold, trait = trait, fold_type = i_fold_type, r = cor(observed, predicted), rmse = sqrt(mean((observed - predicted)^2)))
   }
 
+## calculate means for each trait and fold_type, check if there is sig difference in means between fold types
+spatial_vs_random_model = lm(r ~ trait:fold_type, res_spclust)
+spatial_vs_random_emmeans = emmeans(spatial_vs_random_model, by = 'trait', specs = 'fold_type')
+anova(spatial_vs_random_model)
+spatial_vs_random_emmeans
+
+res_spclust %>% 
+  group_by(trait, fold_type) %>% 
+  summarise(mean_r = mean(r), min_r = min(r), max_r = max(r),
+            mean_rmse = mean(rmse))
 
 ## plots for correlation and RMSE predictive accuracy for both spatial and random sampling
 (r_boxplot = ggplot(res_spclust,aes(x=trait,y=r, color = fold_type)) + 
   geom_boxplot() +
     expand_limits(y = c(0, 1)) +
-  ggtitle('Pearson r correlation for 10 folds')
+    ylab("Pearson's correlation (r)") +
+    xlab('Environmental covariate') +
+    labs(color = '10-fold cross-validation')+
+    theme_bw() +
+    # theme(text = element_text(size = 16),
+          # legend.position = 'top') +
+    # theme_bw() +
+    # theme(axis.text.x = element_text(size = 16),
+    #       axis.text.y = element_text(size = 16)) +
+  ggtitle("Pearson's correlation (r) predictive ability")
 )
+
 (rmse_boxplot = ggplot(res_spclust,aes(x=trait,y=rmse, color = fold_type)) + 
   geom_boxplot() + 
+    theme_bw() +
+    ylab("RMSE") +
+    xlab('Environmental covariate') +
   expand_limits(y = c(0, 1)) +
-  ggtitle('RMSE predictive accuracy for 10 folds')
+  ggtitle('RMSE predictive ability')
 )
+
+(r_boxplot_figure = ggplot(res_spclust %>% filter(fold_type == 'random'),aes(x=trait,y=r, color = fold_type)) + 
+    geom_boxplot() +
+    expand_limits(y = c(0, 1)) +
+    ylab("Pearson's correlation (r)") +
+    xlab('Environmental covariate') +
+    labs(color = '10-fold cross-validation')+
+    theme_bw() +
+    theme(text = element_text(size = 16),
+          legend.position = 'top') +
+    # theme_bw() +
+    # theme(axis.text.x = element_text(size = 16),
+    #       axis.text.y = element_text(size = 16)) +
+    ggtitle('Genomic Prediction of Environment (GPoE) predictive ability')
+)
+
 
 ## plots for correlation and RMSE spatial and random per fold for different traits
 (spatial_R = ggplot(subset(res_spclust,fold_type == 'spatial'),aes(x=trait,y=r)) +
   geom_line(aes(group = interaction(fold,fold_type),color=as.factor(fold))) +
   geom_text(aes(label=fold,group = interaction(fold,fold_type),color=as.factor(fold)),
-            size=3) +  ggtitle('Pearson r correlation for spatial sampling') +
+            size=3) +  
+    ggtitle("Spatial fold Pearson's r") +
+    theme_bw() +
+    theme(axis.text.x = element_text(angle = 20, size = 8, vjust = rotation_vjust(20), hjust = rotation_hjust(20)),
+          plot.title = element_text(size = 10)) + 
+    labs(color = 'Fold #')+
   expand_limits(y=c(0,1))
 )
 
 (spatial_RMSE = ggplot(subset(res_spclust,fold_type == 'spatial'),aes(x=trait,y=rmse)) +
   geom_line(aes(group = interaction(fold,fold_type),color=as.factor(fold))) +
   geom_text(aes(label=fold,group = interaction(fold,fold_type),color=as.factor(fold)),
-            size=3) +  ggtitle('RMSE predictive accuracy for spatial sampling') +
+            size=3) +  
+    ggtitle("Spatial fold RMSE") +
+    theme_bw()+
+    theme(axis.text.x = element_text(angle = 20, size = 8, vjust = rotation_vjust(20), hjust = rotation_hjust(20)),
+          plot.title = element_text(size = 10)) + 
+    labs(color = 'Fold #')+
   expand_limits(y=c(0,1))
 )
 
 (random_R = ggplot(subset(res_spclust,fold_type == 'random'),aes(x=trait,y=r)) +
   geom_line(aes(group = interaction(fold,fold_type),color=as.factor(fold))) +
   geom_text(aes(label=fold,group = interaction(fold,fold_type),color=as.factor(fold)),
-            size=3) +  ggtitle('Pearson r correlation for random sampling') +
+            size=3) + 
+    ggtitle("Random fold Pearson's r") +
+    theme_bw()+
+    theme(axis.text.x = element_text(angle = 20, size = 8, vjust = rotation_vjust(20), hjust = rotation_hjust(20)),
+          plot.title = element_text(size = 10)) + 
+    labs(color = 'Fold #')+
     expand_limits(y=c(0,1))
 )
 
 (random_RMSE = ggplot(subset(res_spclust,fold_type == 'random'),aes(x=trait,y=rmse)) +
   geom_line(aes(group = interaction(fold,fold_type),color=as.factor(fold))) +
   geom_text(aes(label=fold,group = interaction(fold,fold_type),color=as.factor(fold)),
-            size=3) +  ggtitle('RMSE predictive accuracy for random sampling') +
+            size=3) + 
+    ggtitle("Random fold RMSE") +
+    theme_bw()+
+    theme(axis.text.x = element_text(angle = 20, size = 8, vjust = rotation_vjust(20), hjust = rotation_hjust(20)),
+          plot.title = element_text(size = 10)) + 
+    labs(color = 'Fold #')+
     expand_limits(y=c(0,1))
 )
 
-(figure4 = ggarrange(
-  environmental_prediction,
-  ggarrange(r_boxplot, rmse_boxplot, ncol = 2, labels = c('A', 'B'), common.legend = T, legend = 'right'), 
-  ggarrange(spatial_R, random_R, spatial_RMSE, random_RMSE, ncol = 2, nrow = 2, labels = c('C', 'D', 'E', 'F'), common.legend = TRUE, legend = 'right'), nrow = 3))
-png(here(plot_dir, 'Manuscript', 'prediction-of-environment.png'), width = 982, height = 982)
-print(figure4)
-dev.off()    
-    
 
+spatial_combined_coords = merge(spatial_combined[c('fold', 'SampleID')], finalMat_nontransform, by.x = 'SampleID', by.y = 'Unique.ID')
+spatial_combined_coords$fold = factor(spatial_combined_coords$fold, levels = c('1', '2', '3', '4', '5', '6', '7', '8', '9', '10'))
+(spatialsample_plot = ggplot(spatial_combined_coords, aes(x = LongNew, y = LatNew, color = fold)) +
+    geom_text(aes(label = fold)) +
+    xlab('Longitude') +
+    ylab('Latitude')
+)
+
+(prediction_of_environment = ggarrange(
+  ggarrange(r_boxplot, rmse_boxplot, ncol = 2, labels = c('A', 'B'), common.legend = T, legend = 'right'), 
+  ggarrange(spatialsample_plot,
+            ggarrange(spatial_R, random_R, spatial_RMSE, random_RMSE, ncol = 2, nrow = 2, labels = c('D', 'E', 'F', 'G'), common.legend = TRUE, legend = 'right'), labels = c('C'), ncol = 2),
+  nrow = 2))
+png(here(plot_dir, 'Manuscript', 'prediction-of-environment.png'), width = 982, height = 982)
+print(prediction_of_environment)
+dev.off()    
+
+
+spatial_melt_values = spatial_combined_coords %>% pivot_longer(cols = c('tmin', 'tmax', 'trange', 'precipTot', 'aridityMean', 'rhMean', 'elevation'), 
+                                     names_to = 'env_trait', values_to = 'env_trait_value')
+ggplot(spatial_melt_values, aes(y = env_trait_value, x = fold)) +
+  geom_violin() +
+  facet_wrap('env_trait',scales = 'free')
+
+
+# (validation_fold_plot = autoplot(clusters_spatial[[1]]))
+# png(here(plot_dir, 'Manuscript', 'validation_buffer.png'), width = 400, height = 700)
+# print(validation_fold_plot)
+# dev.off()    
+##########################################################################
+# plot RMSE of certain folds
+##########################################################################
+
+spatial_coords = spatial_combined[c('SampleID', 'fold')]
+
+acc_ids = geno_sf$V1
+clusters_spatial$splits[[1]] %>% analysis()
+folds = data.frame(fold =  1:10)
+folds$tmin = lapply(c(1:10), function(x){finalMat %>% 
+    filter(SampleID %in% (clusters_spatial$splits[[x]] %>% assessment() %>% pull(V1))) %>% 
+    pull(tmin) %>% sd()}) %>% unlist()
+folds$tmax = lapply(c(1:10), function(x){finalMat %>% 
+    filter(SampleID %in% (clusters_spatial$splits[[x]] %>% assessment() %>% pull(V1))) %>% 
+    pull(tmax) %>% sd()}) %>% unlist()
+folds$trange = lapply(c(1:10), function(x){finalMat %>% 
+    filter(SampleID %in% (clusters_spatial$splits[[x]] %>% assessment() %>% pull(V1))) %>% 
+    pull(trange) %>% sd()}) %>% unlist()
+folds$precipTot = lapply(c(1:10), function(x){finalMat %>% 
+    filter(SampleID %in% (clusters_spatial$splits[[x]] %>% assessment() %>% pull(V1))) %>% 
+    pull(precipTot) %>% sd()}) %>% unlist()
+folds$aridityMean = lapply(c(1:10), function(x){finalMat %>% 
+    filter(SampleID %in% (clusters_spatial$splits[[x]] %>% assessment() %>% pull(V1))) %>% 
+    pull(aridityMean) %>% sd()}) %>% unlist()
+folds$rhMean = lapply(c(1:10), function(x){finalMat %>% 
+    filter(SampleID %in% (clusters_spatial$splits[[x]] %>% assessment() %>% pull(V1))) %>% 
+    pull(rhMean) %>% sd()}) %>% unlist()
+folds$elevation = lapply(c(1:10), function(x){finalMat %>% 
+    filter(SampleID %in% (clusters_spatial$splits[[x]] %>% assessment() %>% pull(V1))) %>% 
+    pull(elevation) %>% sd()}) %>% unlist()
+folds_pivot = folds %>% pivot_longer(cols = c('tmin', 'tmax', 'trange', 'precipTot', 'aridityMean', 'rhMean', 'elevation'), 
+                                     names_to = 'trait', values_to = 'trait_sd')
+
+folds_sd_rmse = merge(folds_pivot, res_spclust %>% filter(fold_type == 'spatial'), by = c('fold', 'trait'))
+ggplot(folds_sd_rmse, aes(x = trait_sd, y = rmse, color = as.factor(fold), label = as.factor(fold))) +
+  # geom_point() +
+  geom_text(aes(label=as.factor(fold))) +
+  facet_wrap('trait')
+
+folds10 = clusters_spatial$splits[[10]] %>% assessment() %>% pull(V1)
+folds2 = clusters_spatial$splits[[2]] %>% assessment() %>% pull(V1)
+
+finalMat %>% filter(SampleID %in% folds10) %>% dplyr::select(c('tmin', 'tmax', 'trange', 'precipTot', 'aridityMean', 'rhMean', 'elevation')) %>% apply(., 2, sd)
+  
+finalMat_nontransform = read.csv('Env_data/GEA-climate-nontransformed.csv') %>% dplyr::select(c('Unique.ID', 'LatNew', 'LongNew', 'tmin', 'tmax', 'trange', 'precipTot', 'aridityMean', 'rhMean', 'elevation'))
+finalMat_nontransform
+finalMat_nontransform %>% filter(Unique.ID %in% folds10) %>% dplyr::select(c('tmin', 'tmax', 'trange', 'precipTot', 'aridityMean', 'rhMean', 'elevation')) %>% apply(., 2, sd)
+finalMat_nontransform %>% filter(Unique.ID %in% folds2) %>% dplyr::select(c('tmin', 'tmax', 'trange', 'precipTot', 'aridityMean', 'rhMean', 'elevation')) %>% apply(., 2, sd)
+
+
+lapply(c(1:10), function(x){clusters_spatial$splits[[x]] %>% assessment() %>% as.data.frame() %>% dplyr::select(c('tmin.x', 'tmax.x', 'trange.x', 'precipTot.x', 'aridityMean.x', 'rhMean.x', 'elevation.x')) %>% apply(., 2, sd)})
 
 

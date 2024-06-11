@@ -42,6 +42,7 @@ print(scree_plot)
 dev.off()
 
 sum(var_explained[1:10])
+# write.csv(cbind(cimmyt_grow$Unique.ID, geno_pca$x[,1:10]), here(analyses_dir, 'Tables/genetic_PCs.csv'))
 
 library(gridGraphics)
 library(grid)
@@ -68,3 +69,30 @@ dev.off()
 
 ggpairs(cimmyt_pca[,c('LatNew', 'tmin', 'tmax', 'trange', 'precipTot', 'aridityMean', 'rhMean', 'elevation', 'PCA1', 'PCA2', 'PCA3', 'PCA4','PCA5')],
         columns = 9:13)
+
+(pca_map = ggmap(terrain_kernels, extent = 'device')+
+    geom_point(data = cimmyt_pca, 
+               aes(x = LongNew, y = LatNew, color = PCA4),
+               pch=16,alpha=0.25,size=1) + 
+    scale_color_continuous(name = "PCA1", low = 'blue', high = 'red') +
+    theme(axis.ticks.x = element_blank(),
+          axis.text.x = element_blank(),
+          axis.ticks.y = element_blank(),
+          axis.text.y = element_blank(),
+          plot.title = element_text(size = 10)) +
+    theme(legend.title = element_text(size = 10),
+          legend.text = element_text(size = 8),
+          legend.position = c(0.15, 0.15),
+          legend.key.size = unit(.5, "lines")) +
+    # guides(shape = guide_legend(override.aes = list(size = 6)),
+    #        color = guide_legend(override.aes = list(size = 6))) +
+    # ggtitle("Geo-coordinates for CIMMYT data", ) +
+    xlab("") +
+    ylab("")
+)
+
+pca_corr = cor(cimmyt_pca[,c('LatNew', 'tmin', 'tmax', 'trange', 'precipTot', 'aridityMean', 'rhMean', 'elevation', 'PCA1', 'PCA2', 'PCA3', 'PCA4','PCA5')])
+ggplot(data = melt(pca_corr), aes(x=Var1, y=Var2,
+                                   fill=value)) + 
+  geom_tile() +
+  scale_fill_continuous(low = 'blue', high = 'red')

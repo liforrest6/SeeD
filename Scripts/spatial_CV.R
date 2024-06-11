@@ -15,7 +15,7 @@ rownames(K) = K[,1]
 K = as.matrix(K[,-1])
 env_data = read.csv(here(env_data_dir, 'GEA-climate-invnormtransformed.csv'))
 pheno_data = read.csv(here(phenotype_data_dir, 'blups_std.csv'))
-geno_info = read.csv(here(genetic_data_dir, 'selected_genotypeIDs.csv'))
+geno_info = read.csv(here(phenotype_data_dir, 'selected_genotypeIDs.csv'))
 passport_data = readxl::read_excel(here(env_data_dir, 'cimmyt_data.xlsx'))
 dna_to_tc_gid = as.data.frame(readxl::read_xlsx(here(phenotype_data_dir, 'Blups_01.xlsx') ,sheet = 'DNA to TC GID'))
 
@@ -48,7 +48,7 @@ geno_info[,traits] = scale(geno_info[,traits])
 clusters_spatial = spatial_clustering_cv(geno_sf,v=10,buffer = 4e5)
 # clusters_spatial = clusters
 pdf('spatial_cluster_map.pdf')
-autoplot(clusters)
+(spatialsample_plot = autoplot(clusters_spatial))
 dev.off()
 
 res_spclust = foreach(i=1:nrow(clusters),.combine = rbind) %dopar% {

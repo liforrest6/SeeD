@@ -8,7 +8,7 @@
 source(here::here('config.R'))
 
 ## 4692 SEEDGWAS with no repeat sequencing
-non_dup_acc = read.csv(here(genetic_data_dir, 'selected_genotypeIDs.csv'))
+non_dup_acc = read.csv(here(phenotype_data_dir, 'selected_genotypeIDs.csv'))
 colnames(non_dup_acc) = c('Unique.ID', 'Sample')
 ## CIMMYT climate data
 cimmyt = read_excel(here(env_data_dir, 'cimmyt_data.xlsx'), 

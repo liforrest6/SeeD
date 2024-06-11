@@ -25,7 +25,6 @@ candidate_snps = clumped_SNPs_pivot %>% pull('lead_SNP')
 # clumped_snps = unlist(clumped_snps)
 non_lead_snps = clumped_SNPs_pivot %>% pull('clumped')
 
-library(tibble)
 v4_candidates = v4_coords %>% filter(v4_SNP %in% candidate_snps | v4_SNP %in% non_lead_snps) %>% dplyr::select(c('CHR', 'BP', 'END', 'v4_SNP', 'STRAND'))
 v4_candidates = add_column(v4_candidates, score = rep(0, nrow(v4_candidates)), .after = 4)
 colnames(v4_candidates) = c('chrom', 'start', 'end', 'name', 'score', 'strand')
@@ -178,6 +177,7 @@ all_corr_matrix = data.table::rbindlist(lapply(c(1, 2, 3, 4, 5, 7, 8, 9, 10), co
 all_corr_matrix = merge(all_corr_matrix, v4_coords[c('v4_SNP', 'BP', 'CHR')], by.x = 'SNP B', by.y = 'v4_SNP')
 all_corr_matrix = merge(all_corr_matrix, gea_results[c('SNP', 'P')], by.x = 'SNP B', by.y = 'SNP')
 
+r2_threshold = 0
 LD_plots = lapply(top_hits_clumped, function(lead_SNP) {
   lead_SNP_pos = v4_coords[v4_coords$v4_SNP == lead_SNP, 'BP']
   lead_SNP_chr = v4_coords[v4_coords$v4_SNP == lead_SNP, 'CHR']
@@ -232,6 +232,16 @@ png(here(plot_dir, 'Manuscript', 'candidate_gene_LD.png'), width = 750, height =
 annotate_figure(all_plots, left = textGrob("LD (r2)", rot = 90, vjust = 1, gp = gpar(cex = 1.3)),
                 bottom = textGrob("Distance from lead SNP (kb)", gp = gpar(cex = 1.3)))
 dev.off()
+
+## check if hsftf9 is in LD with inv9f
+
+all_corr_matrix %>% filter(`SNP B` == 'S9_148365695' & )
+
+lead_hsftf9 = 'S9_148365695'
+lead_hsftf9_pos = v4_coords[v4_coords$v4_SNP == lead_hsftf9, 'BP']
+lead_hsftf9_chr = v4_coords[v4_coords$v4_SNP == lead_hsftf9, 'CHR']
+lead_corrs = all_corr_matrix %>% filter(V1 == lead_hsftf9, CHR == lead_hsftf9_chr, 
+                                        BP < lead_hsftf9_pos + 300000, BP > lead_hsftf9_pos - 300000)
 
 
 

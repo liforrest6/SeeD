@@ -245,8 +245,11 @@ new_env_data = read_xlsx('../Downloaded_data/Passport/Maize climate data nov 202
 ```{r}
 length(unique(dna_to_tc_gid$`AccessionGID (Germplasm ID at CIMMYT; General_identifier in Germinate)`))
 
-new_env_data = read_xlsx('../Downloaded_data/Passport/Maize climate data nov 2022 AEZ elevation by growing season and flowering period.xlsx')
-germinate_data = fread('../Germinate_data/germinatebase_03f36416-945c-4fa7-bc2d-b62377de40d5.txt',data.table=F)
+# new_env_data = read_xlsx('../Downloaded_data/Passport/Maize climate data nov 2022 AEZ elevation by growing season and flowering period.xlsx')
+new_env_data = read_excel(here(env_data_dir, 'cimmyt_data.xlsx'), 
+                    sheet = 'climate growing and fl season',
+                    guess_max = 12000)
+germinate_data = fread('../Phenotype_data/germinatebase_03f36416-945c-4fa7-bc2d-b62377de40d5.txt',data.table=F)
 
 length(unique(new_env_data$GID))
 sum(unique(new_env_data$GID) %in% dna_to_tc_gid$`AccessionGID (Germplasm ID at CIMMYT; General_identifier in Germinate)`)
@@ -262,15 +265,15 @@ sum(unique(germinate_data_withLatLong$general_identifier) %in% dna_to_tc_gid$`Ac
 mean(dna_to_tc_gid$`AccessionGID (Germplasm ID at CIMMYT; General_identifier in Germinate)` %in% unique(germinate_data_withLatLong$general_identifier))
 
 
-tc_info = fread('../prepped_data/TestCross_passport.csv',data.table=F)
+tc_info = fread('../Phenotype_data/TestCross_passport.csv',data.table=F)
 
 
 
-load('../eGWAS/WorldClimMat.Rimage')
+# load('../eGWAS/WorldClimMat.Rimage')
 # remove outlier lat/long
 # one point with longitude missing a - sign. This got the wrong weather data pulled.
 # one point way out in the pacific - Hawaii, so OK
-finalMat = subset(finalMat,longitude < 50 & !is.na(SampleID))
+# finalMat = subset(finalMat,longitude < 50 & !is.na(SampleID))
 
 
 GIDs = unique(c(new_env_data$GID,germinate_data$general_identifier,tc_info$AccGID))
