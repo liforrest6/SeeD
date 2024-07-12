@@ -10,11 +10,13 @@ source(here::here('config.R'))
 
 library(emmeans)
 library(multcomp)
+library(lmerTest)
 
 finalMat = read.csv(here(env_data_dir, 'GEA-climate-invnormtransformed.csv'))
 just_clim = finalMat[-c(1)]
 blups_std = read.csv(here(phenotype_data_dir, 'blups_std.csv'))
 blups_deregressed = read.csv(here(phenotype_data_dir, 'blups_deregressed.csv'))
+trial_info = read.csv('Phenotype_data/Trial_info.csv')
 
 finalMat$SampleID = separate(data = finalMat, col = Unique.ID, into = c('SampleID', 'Unique.ID'), sep = ':')$SampleID
 # envMat = separate(data = finalMat, col = SampleID, into = c('SampleID', 'Unique.ID'), sep = ':') %>% subset(select = -c(Unique.ID))
@@ -81,53 +83,64 @@ finalMat_race = finalMat %>% merge(passport_data, by.x = 'SampleID', by.y = 'Sam
 finalMat_race$PrimaryRace[finalMat_race$PrimaryRace == ''] = 'UNKNOWN'
 finalMat_race$PrimaryRace[is.na(finalMat_race$PrimaryRace)] = 'UNKNOWN'
 finalMat_race = finalMat_race[match(finalMat$Unique.ID, finalMat_race$Unique.ID),]
-write.csv(finalMat_race, here(env_data_dir, 'GEA-race-classifications.csv'), row.names = F)
+# write.csv(finalMat_race, here(env_data_dir, 'GEA-race-classifications.csv'), row.names = F)
  
 ####################################################################################
 ## write a table for seeing how many accessions are in each trial for each trait
 ####################################################################################
-phenotypes = c('GrainWeightPerHectareCorrected', 'PlantHeight', 'ASI', 'FieldWeight', 'BareCobWeight', 'DaysToFlowering')
-trial_trait_table = setNames(data.frame(matrix(ncol = 6, nrow = 31), 
-                                        row.names = blups_deregressed$Experimento %>% unique()),
-                             phenotypes)
-for(trait in phenotypes) {
-  for(experiment in blups_deregressed$Experimento %>% unique()) {
-    num_acc = blups_deregressed %>% filter(Trait == trait, Experimento == experiment) %>% pull(SampleID) %>% unique() %>% length()
+traits = c('ASI', 'GrainWeightPerHectareCorrected', 'PlantHeight', 'FieldWeight', 'BareCobWeight', 'DaysToFlowering')
+
+## count up all non-deregressed accessions that were originally grown in (non-regressed) field trials
+blups_std_acc_filter = blups_std %>% filter(Trial_Classification != 'Stress')
+
+trial_trait_table = setNames(data.frame(matrix(ncol = 6, nrow = 23),
+                                        row.names = blups_std_acc_filter$Experimento %>% unique()),
+                             traits)
+for(trait in traits) {
+  for(experiment in blups_std_acc_filter$Experimento %>% unique()) {
+    num_acc = blups_std_acc_filter %>% filter(Trait == trait, Experimento == experiment) %>% pull(SampleID) %>% unique() %>% length()
     trial_trait_table[experiment, trait] = num_acc
   }
 }
 
-# write.csv(trial_trait_table, here(phenotype_data_dir, 'accessions_per_trial_per_trait.csv'))
+write.csv(trial_trait_table, here(analyses_dir, 'Tables', 'accessions_per_trial_per_trait_original.csv'), quote = F)
 
-## do this for deregressed trials, as some are dropped
-blups_deregressed_acc_filter = blups_deregressed %>% filter(Trial_Classification != 'Stress') %>% filter(SampleID %in% finalMat$SampleID)
+## count up all deregressed accessions that were grown in (non-regressed) field trials AND had climate data that were used in our analyses
+blups_deregressed_acc_filter = blups_deregressed %>% filter(Trial_Classification != 'Stress' & Trait != 'GrainWeightPerHectare') %>% filter(SampleID %in% finalMat$SampleID)
 
-trial_trait_table_deregressed = setNames(data.frame(matrix(ncol = 6, nrow = 23), 
-                                        row.names = blups_deregressed_acc_filter$Experimento %>% unique()),
-                             phenotypes)
-for(trait in phenotypes) {
-  for(experiment in blups_deregressed_acc_filter$Experimento %>% unique()) {
-    num_acc = blups_deregressed_acc_filter %>% filter(Trait == trait, Experimento == experiment) %>% pull(SampleID) %>% unique() %>% length()
-    trial_trait_table_deregressed[experiment, trait] = num_acc
-  }
-}
+# trial_trait_table_deregressed = setNames(data.frame(matrix(ncol = 6, nrow = 23), 
+#                                         row.names = blups_deregressed_acc_filter$Experimento %>% unique()),
+#                              traits)
+# for(trait in traits) {
+#   for(experiment in blups_deregressed_acc_filter$Experimento %>% unique()) {
+#     num_acc = blups_deregressed_acc_filter %>% filter(Trait == trait, Experimento == experiment) %>% pull(SampleID) %>% unique() %>% length()
+#     trial_trait_table_deregressed[experiment, trait] = num_acc
+#   }
+# }
+# write.csv(trial_trait_table_deregressed, here(analyses_dir, 'Tables', 'accessions_per_trial_per_trait_deregressed.csv'))
 
-# write.csv(trial_trait_table_deregressed, here(phenotype_data_dir, 'accessions_per_trial_per_trait_deregressed.csv'))
+accessions_per_trial = blups_deregressed_acc_filter %>% group_by(Experimento) %>% summarize(n_unique = n_distinct(SampleID))
 
-filtered_blups_deregressed = blups_deregressed %>% 
-  filter(SampleID %in% finalMat$SampleID & Trial_Classification != 'Stress')
+## how many accessions in each trial:tester combo?
+accessions_per_tester_per_trial = table(blups_deregressed_acc_filter$Experimento, blups_deregressed_acc_filter$Tester)
+write.csv(accessions_per_tester_per_trial, here(analyses_dir, 'Tables', 'accessions_per_trial_per_tester.csv'), quote = F)
+accessions_per_trial_per_trait = table(blups_deregressed_acc_filter$Experimento, blups_deregressed_acc_filter$Trait)
+write.csv(accessions_per_trial_per_trait, here(analyses_dir, 'Tables', 'accessions_per_trial_per_trait.csv'), quote = F)
 
-testers_in_trial = filtered_blups_deregressed %>% 
+## how many testers are represented in each trial:trait combo?
+testers_in_trial = blups_deregressed_acc_filter %>% 
   group_by(Trait, Experimento) %>% 
-  summarise(testers_in_trial = n_distinct(Tester))
-write.csv(testers_in_trial, here(phenotype_data_dir, 'testers_in_trial.csv'))
+  summarise(tester_count = n_distinct(Tester))
+testers_in_trial = pivot_wider(testers_in_trial, names_from = Trait, values_from = tester_count, values_fill = list(tester_count = 0))
+write.csv(testers_in_trial, here(analyses_dir, 'Tables', 'testers_in_trial.csv'), quote = F)
 
-trials_per_tester = filtered_blups_deregressed %>% 
+## how many trials are represented for each tester:trait combo?
+trials_per_tester = blups_deregressed_acc_filter %>% 
   group_by(Trait, Tester) %>% 
-  summarise(trials_per_tester = n_distinct(Experimento))
-write.csv(trials_per_tester, here(phenotype_data_dir, 'trials_per_tester.csv'))
+  summarise(trial_count = n_distinct(Experimento))
+trials_per_tester = pivot_wider(trials_per_tester, names_from = Trait, values_from = trial_count, values_fill = list(trial_count = 0))
+write.csv(trials_per_tester, here(analyses_dir, 'Tables', 'trials_per_tester.csv'), quote = F)
 
-write.csv(table(filtered_blups_deregressed$Experimento, filtered_blups_deregressed$Tester), here(phenotype_data_dir, 'accessions_per_trial_per_tester.csv'))
 
 # library(xlsx)
 # write.xlsx(trial_trait_table_deregressed, file = 'SeeD_trial_information.xlsx', sheetName = 'accessions in trial per trait')
@@ -180,131 +193,177 @@ purrr::map2(list(bcw_process, gwph_process, fw_process, ph_process, dtf_process,
 ## phenotypic prediction
 ####################################################################################
 
-trial_info = read.csv('Phenotype_data/Trial_info.csv')
-blups_std = read.csv(here(phenotype_data_dir, 'blups_std.csv'))
-blups_deregressed = read.csv(here(phenotype_data_dir, 'blups_deregressed.csv'))
-
-accessions_per_trial = read.csv(here(phenotype_data_dir, 'accessions_per_trial_per_trait.csv'))
-trial_worldclim = read.csv('Phenotype_data/Trial_worldclim.csv')
-trial_master = merge(trial_worldclim, trial_info, by = 'Experimento')
-
-## plot correlations between trials for all raw worldclim variables
-cor_between_trials = data.frame(cor(t(trial_worldclim[4:22])), 
-                                trial_worldclim$Experimento)
-colnames(cor_between_trials) = c(trial_worldclim$Experimento, 'Trial')
-
 ## make tables for prediction ability values
-all_traits_prediction_ability_deregressed_nostress = data.frame(data.table::rbindlist(lapply(traits[-c(1)], function(trait_i){
-  cbind(fread(sprintf('Analyses/PhenotypicPrediction/deregressed_blups_nostress/modelPrediction_nostress_%s_results_resid.csv', trait_i)), trait_i)
-})))
 
+## doesn't include stress trials or testers with low sample sizes
 all_traits_prediction_ability_deregressed_nostress_filterTrial = data.frame(data.table::rbindlist(lapply(traits[-c(1)], function(trait_i){
   cbind(fread(sprintf('Analyses/PhenotypicPrediction/deregressed_blups_nostress_filterTrial/modelPrediction_nostress_%s_results_resid.csv', trait_i)), trait_i)
 })))
 
-all_traits_prediction_ability_deregressed = data.frame(data.table::rbindlist(lapply(traits[-c(1)], function(trait_i){
-  cbind(fread(sprintf('Analyses/PhenotypicPrediction/deregressed_blups/modelPrediction_%s_results_resid.csv', trait_i)), trait_i)
-})))
-
-all_traits_prediction_ability_deregressed_filterTrial = data.frame(data.table::rbindlist(lapply(traits[-c(1)], function(trait_i){
-  cbind(fread(sprintf('Analyses/PhenotypicPrediction/deregressed_blups_filterTrial/modelPrediction_%s_results_resid.csv', trait_i)), trait_i)
-})))
-
-all_traits_prediction_ability_std = data.frame(data.table::rbindlist(lapply(traits[-c(1)], function(trait_i){
-  cbind(fread(sprintf('Analyses/PhenotypicPrediction/std/modelPrediction_%s_results_resid.csv', trait_i)), trait_i)
-})))
-# write.csv(all_traits_prediction_ability_deregressed_nostress, here(analyses_dir, 'Tables', 'all_traits_prediction_ability_deregressed_nostress.csv'))
+# all_traits_prediction_ability_deregressed = data.frame(data.table::rbindlist(lapply(traits[-c(1)], function(trait_i){
+#   cbind(fread(sprintf('Analyses/PhenotypicPrediction/deregressed_blups/modelPrediction_%s_results_resid.csv', trait_i)), trait_i)
+# })))
+# 
+# all_traits_prediction_ability_deregressed_nostress = data.frame(data.table::rbindlist(lapply(traits[-c(1)], function(trait_i){
+#   cbind(fread(sprintf('Analyses/PhenotypicPrediction/deregressed_blups_nostress/modelPrediction_nostress_%s_results_resid.csv', trait_i)), trait_i)
+# })))
+# 
+# all_traits_prediction_ability_deregressed_filterTrial = data.frame(data.table::rbindlist(lapply(traits[-c(1)], function(trait_i){
+#   cbind(fread(sprintf('Analyses/PhenotypicPrediction/deregressed_blups_filterTrial/modelPrediction_%s_results_resid.csv', trait_i)), trait_i)
+# })))
+# 
+# all_traits_prediction_ability_std = data.frame(data.table::rbindlist(lapply(traits[-c(1)], function(trait_i){
+#   cbind(fread(sprintf('Analyses/PhenotypicPrediction/std/modelPrediction_%s_results_resid.csv', trait_i)), trait_i)
+# })))
+write.csv(all_traits_prediction_ability_deregressed_nostress_filterTrial, here(analyses_dir, 'Tables', 'all_traits_prediction_ability_deregressed_nostress_filterTrial.csv'))
 # write.csv(all_traits_prediction_ability_deregressed, here(analyses_dir, 'Tables', 'all_traits_prediction_ability_deregressed.csv'))
 # write.csv(all_traits_prediction_ability_std, here(analyses_dir, 'Tables', 'all_traits_prediction_ability_std.csv'))
 
 ## analyze mean prediction ability across trials
-# all_traits_prediction_ability_deregressed_melt = pivot_longer(all_traits_prediction_ability_deregressed, 
-#                                                               cols = c("lm_PC5", 'lm_matching_SNPs', 
+# all_traits_prediction_ability_deregressed_melt = pivot_longer(all_traits_prediction_ability_deregressed,
+#                                                               cols = c("lm_PC5", 'lm_matching_SNPs',
 #                                                                        'lm_enriched_SNPs', 'lm_all_SNPs', 'lm_all_SNPs_env',
 #                                                                        'lm_PC5_env', 'rf_env', 'rf_env_PC5'),
 #                                                               names_to = 'model',
 #                                                               values_to = 'r')
-# write.csv(all_traits_prediction_ability_deregressed_mean, here(analyses_dir, 'Tables', 'all_traits_prediction_ability_deregressed_mean.csv'))
 
 
 all_traits_prediction_ability_deregressed_melt = pivot_longer(all_traits_prediction_ability_deregressed_nostress_filterTrial, 
-                                                              cols = c("lm_PC5", 'lm_matching_SNPs', 
+                                                              cols = c("lm_PC5", 'lm_matching_SNPs', 'lm_env',
                                                                        'lm_enriched_SNPs', 'lm_all_SNPs', 'lm_all_SNPs_env',
                                                                        'lm_PC5_env', 'rf_env', 'rf_env_PC5'),
                                                               names_to = 'model',
                                                               values_to = 'r')
-## across all traits
+
+## obtain prediction means for each trial
+all_traits_prediction_ability_deregressed_trial = all_traits_prediction_ability_deregressed_nostress_filterTrial %>% 
+  dplyr::select(-c(V1, n_train, n_test, n_total)) %>% 
+  group_by(trait_i, Experimento) %>% 
+  summarise_at(vars(-c(fold)),mean)
+write.csv(all_traits_prediction_ability_deregressed_trial, here(analyses_dir, 'Tables', 'all_traits_mean_prediction_ability_trial.csv'), quote = F)
+
+## take prediction means for entire trait across all trials
+all_traits_prediction_ability_deregressed_trait = all_traits_prediction_ability_deregressed_nostress_filterTrial %>% 
+  dplyr::select(-c(V1, n_train, n_test, n_total)) %>% 
+  group_by(trait_i) %>% 
+  summarise_at(vars(-c(fold, Experimento)),mean)
+write.csv(all_traits_prediction_ability_deregressed_trait, here(analyses_dir, 'Tables', 'all_traits_mean_prediction_ability_trait.csv'), quote = F)
+
+all_traits_prediction_ability_deregressed_trial %>% 
+  mutate(climate_difference = lm_all_SNPs_env - lm_all_SNPs,
+         climate_better = sapply(climate_difference, function(x) ifelse(abs(x) < 0.01, 0, sign(x)))) %>% 
+  filter(trait_i == 'FieldWeight') %>% 
+  dplyr::select(c(Experimento, climate_difference, climate_better))
+
+wilcox.test(all_traits_prediction_ability_deregressed_trial %>% filter(trait_i == 'FieldWeight') %>% pull(lm_all_SNPs),
+            all_traits_prediction_ability_deregressed_trial %>% filter(trait_i == 'FieldWeight') %>% pull(lm_all_SNPs_env),
+            paired = T, alternative = 'two.sided')
+
+## run significance tests between models
+## for all traits
 {
-  prediction_comparison_model = lm(r ~ Experimento + fold + trait_i + trait_i:Experimento + trait_i:fold + Experimento:fold + model, 
-                                   data = all_traits_prediction_ability_deregressed_melt %>% 
-                                     filter(model %in% c("lm_PC5",
-                                                         'lm_matching_SNPs', 'lm_enriched_SNPs', 
-                                                         'lm_all_SNPs', 'lm_all_SNPs_env')))
-  anova(prediction_comparison_model)
-  prediction_comparison_means = emmeans(prediction_comparison_model, specs = 'model', infer = c(T, T), level = 1 - 0.05/5)
-  cld(prediction_comparison_means, alpha = 0.05/5)
+  all_traits_deregressed_melt = all_traits_prediction_ability_deregressed_melt %>% 
+    filter(trait_i %in% c('PlantHeight')) %>% 
+    filter(model %in% c('lm_PC5', 'lm_PC5_env',
+                        'lm_matching_SNPs', 'lm_enriched_SNPs', 
+                        'lm_all_SNPs', 'lm_all_SNPs_env'))
+  prediction_comparison_model = lmer(r ~ Experimento + model + (1|model:Experimento) + (1|Experimento:fold) , 
+                                     data = all_traits_deregressed_melt, weights = n_total)
+  anova(prediction_comparison_model, ddf = 'K')
+  prediction_comparison_means = emmeans(prediction_comparison_model, specs = 'model', infer = c(T, T), level = 1-0.05/1)
+  cld(prediction_comparison_means)
   prediction_comparison_effects = contrast(prediction_comparison_means, 'pairwise')
-  prediction_comparison_effects_summary = summary(prediction_comparison_effects, level = 1-0.05/5, infer = c(T, T))
-  prediction_comparison_effects_summary$p.value = pmin(1,prediction_comparison_effects_summary$p.value*5)
+  prediction_comparison_effects_summary = summary(prediction_comparison_effects, level = 1-0.05/1, infer = c(T, T))
+  prediction_comparison_effects_summary$p.value = pmin(1,prediction_comparison_effects_summary$p.value)
   prediction_comparison_effects_summary
 }
-
 ## just for field weight
 {
-  summary(all_traits_prediction_ability_deregressed %>% filter(trait_i == 'FieldWeight'))
-  prediction_comparison_model = lmer(r ~ Experimento + fold + Experimento:fold + model:Experimento + model:fold + model, 
-                                   data = all_traits_prediction_ability_deregressed_melt %>% 
-                                     filter(trait_i == 'FieldWeight') %>% 
-                                     filter(model %in% c("lm_PC5", 'lm_PC5_env',
-                                                         'rf_env', 'rf_env_PC5',
-                                                         'lm_matching_SNPs', 'lm_enriched_SNPs', 
-                                                         'lm_all_SNPs', 'lm_all_SNPs_env')))
-  anova(prediction_comparison_model)
+  fieldweight_deregressed_melt = all_traits_prediction_ability_deregressed_melt %>% 
+    filter(trait_i == 'FieldWeight') %>% 
+    filter(model %in% c('lm_PC5', 'lm_PC5_env',
+                        'lm_matching_SNPs', 'lm_enriched_SNPs', 
+                        'lm_all_SNPs', 'lm_all_SNPs_env'))
+  prediction_comparison_model = lmer(r ~ Experimento + (1|fold) + (1|model:fold) + (1|Experimento:fold) + model:Experimento + model, 
+                                   data = fieldweight_deregressed_melt, weights = n_total)
+  model_anova = anova(prediction_comparison_model, ddf = 'K')
+  combined_pvalue = mean(model_anova$`Pr(>F)`[2:3])
+  print(model_anova)
+  print(combined_pvalue)
   prediction_comparison_means = emmeans(prediction_comparison_model, specs = 'model', infer = c(T, T), level = 1-0.05/1)
   cld(prediction_comparison_means)
   prediction_comparison_effects = contrast(prediction_comparison_means, 'pairwise')
   prediction_comparison_effects_summary = summary(prediction_comparison_effects, level = 1-0.05/1, infer = c(T, T))
-  prediction_comparison_effects_summary$p.value = pmin(1,prediction_comparison_effects_summary$p.value*1)
+  prediction_comparison_effects_summary$p.value = pmin(1,prediction_comparison_effects_summary$p.value)
   prediction_comparison_effects_summary
 }
+
+## looking at interaction effect - model:trial is fixed
 {
-  summary(all_traits_prediction_ability_deregressed %>% filter(trait_i == 'FieldWeight'))
-  prediction_comparison_model = lm(r ~ Experimento + fold + Experimento:fold + model, 
-                                   data = all_traits_prediction_ability_deregressed_melt %>% 
-                                     filter(trait_i == 'FieldWeight') %>% 
-                                     filter(model %in% c('lm_enriched_SNPs', 'lm_matching_SNPs', 'lm_all_SNPs')))
-  anova(prediction_comparison_model)
+  fieldweight_deregressed_melt = all_traits_prediction_ability_deregressed_melt %>% 
+    filter(trait_i == 'FieldWeight') %>% 
+    filter(model %in% c('lm_PC5', 'lm_PC5_env',
+                        'lm_matching_SNPs', 'lm_enriched_SNPs', 
+                        'lm_all_SNPs', 'lm_all_SNPs_env'))
+  n_experiments = fieldweight_deregressed_melt %>% pull(Experimento) %>% unique() %>% length()
+  prediction_comparison_model = lmer(r ~ Experimento + model + model:Experimento + (1|Experimento:fold) , 
+                                     data = fieldweight_deregressed_melt, weights = n_total)
+  model_anova = anova(prediction_comparison_model, ddf = 'K')
+  print(model_anova)
+  emmip(prediction_comparison_model, model ~ Experimento, CIs = F)
+  prediction_comparison_means = emmeans(prediction_comparison_model, specs = 'model', by = 'Experimento', infer = c(T, T), level = 1-0.05/6)
+  cld(prediction_comparison_means)
+  prediction_comparison_effects = contrast(prediction_comparison_means, 'pairwise', name = 'model_effect')
+  regrouped_model_effects = update(prediction_comparison_effects,by = 'model_effect')
+  experimento_model_comparison_effects = contrast(regrouped_model_effects, 'pairwise')
+  experimento_model_comparison_effects_summary = summary(experimento_model_comparison_effects,infer = T,level = 1-0.05/n_experiments)
+  # prediction_comparison_effects_summary = summary(prediction_comparison_effects, level = 1-0.05/n_experiments, infer = c(T, T))
+  # prediction_comparison_effects_summary$p.value = pmin(1,prediction_comparison_effects_summary$p.value)
+  # prediction_comparison_effects_summary
+  experimento_model_comparison_effects_summary$p.value = pmin(1,experimento_model_comparison_effects_summary$p.value * n_experiments)
+}
+
+## looking at main effect - make trial:model random
+{
+  fieldweight_deregressed_melt = all_traits_prediction_ability_deregressed_melt %>% 
+    filter(trait_i == 'FieldWeight') %>% 
+    filter(model %in% c('lm_PC5', 'lm_PC5_env',
+                        'lm_matching_SNPs', 'lm_enriched_SNPs', 
+                        'lm_all_SNPs', 'lm_all_SNPs_env'))
+  prediction_comparison_model = lmer(r ~ Experimento + model + (1|model:Experimento) + (1|Experimento:fold) , 
+                                     data = fieldweight_deregressed_melt, weights = n_total)
+  model_anova = anova(prediction_comparison_model, ddf = 'K')
+  print(model_anova)
   prediction_comparison_means = emmeans(prediction_comparison_model, specs = 'model', infer = c(T, T), level = 1-0.05/1)
   cld(prediction_comparison_means)
   prediction_comparison_effects = contrast(prediction_comparison_means, 'pairwise')
   prediction_comparison_effects_summary = summary(prediction_comparison_effects, level = 1-0.05/1, infer = c(T, T))
-  prediction_comparison_effects_summary$p.value = pmin(1,prediction_comparison_effects_summary$p.value*1)
+  prediction_comparison_effects_summary$p.value = pmin(1,prediction_comparison_effects_summary$p.value)
   prediction_comparison_effects_summary
 }
-# 
-# prepped_data = read.csv('Phenotype_data/prepped_data.csv')
-# phenotypes_env %>% group_by(Trait, Experimento) %>% filter(Trait == 'FieldWeight') %>% count(Tester) %>% print(n = 70)
-# prepped_data %>% group_by(Experimento) %>% count(Tester) %>% count(Experimento) %>% print(n = 29)
+## for purely environmental
+{
+  fieldweight_deregressed_env_melt = all_traits_prediction_ability_deregressed_melt %>% 
+    filter(trait_i == 'PlantHeight') %>% 
+    filter(model %in% c('lm_PC5', 'lm_env',
+                        'rf_env', 'rf_env_PC5'))
+  # prediction_comparison_model = lmer(r ~ Experimento + (1|fold) + (1|model:fold) + (1|Experimento:fold) + model:Experimento + model, 
+                                     # data = fieldweight_deregressed_env_melt)
+  prediction_comparison_model = lmer(r ~ Experimento + model + (1|model:Experimento) + (1|Experimento:fold) , 
+                                     data = fieldweight_deregressed_env_melt, weights = n_total)
+  anova(prediction_comparison_model, ddf = 'K')
+  prediction_comparison_means = emmeans(prediction_comparison_model, specs = 'model', infer = c(T, T), level = 1-0.05/1)
+  cld(prediction_comparison_means)
+  prediction_comparison_effects = contrast(prediction_comparison_means, 'pairwise')
+  prediction_comparison_effects_summary = summary(prediction_comparison_effects, level = 1-0.05/1, infer = c(T, T))
+  prediction_comparison_effects_summary$p.value = pmin(1,prediction_comparison_effects_summary$p.value)
+  prediction_comparison_effects_summary
+}
 
 all_traits_prediction_ability_deregressed_melt %>% 
-  group_by(trait_i, fold, model) %>% 
-  summarise(count = n(), mean_r = mean(r), min = min(r), max = max(r)) %>% 
-  filter(fold == 'CML244/CML349') %>% 
-  # filter(trait_i == 'PlantHeight') %>%
-  View()
-  print(n = 1000)
-
-lapply(list(all_traits_prediction_ability_deregressed, all_traits_prediction_ability_deregressed_filterTrial,
-         all_traits_prediction_ability_deregressed_nostress, all_traits_prediction_ability_deregressed_nostress_filterTrial),
-       function(x) {
-         x %>% filter(fold == 'CML244/CML349') %>% nrow()
-       }
-)
-
-all_traits_prediction_ability_deregressed_melt %>% 
-  group_by(trait_i, model, fold) %>% 
-  summarise(count = n(), mean_r = mean(r)) %>% 
+  group_by(trait_i, model) %>% 
+  summarise(count = n(), mean_r = mean(r, na.rm = T), min_r = min(r), max_r= max(r)) %>% 
   filter(trait_i == 'FieldWeight') %>% 
   print(n = 1000)
 
-t.test(all_traits_prediction_ability_deregressed_nostress_filterTrial$lm_all_SNPs, all_traits_prediction_ability_deregressed_nostress_filterTrial$lm_PC5)
+t.test(all_traits_prediction_ability_deregressed_trial %>% filter(trait_i == 'BareCobWeight') %>% pull(rf_env), alternative = 'greater')

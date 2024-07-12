@@ -366,9 +366,9 @@ shift_legend <- function(p) {
 }
 
 all_labels = c('Top 5 PCs', 'Random SNPs + PCs', 'Top envGWAS SNPs + PCs', 'All SNPs', 'All SNPs + Climate',
-               'PCs + Climate LMM', 'Climate data RF', 'Climate data + PCs RF')
+               'PCs + Climate', 'Climate data LMM', 'Climate data RF', 'Climate data + PCs RF')
 
-model_palette = c('#4F4C4D', '#6994dd', '#8db5f1', '#f9ea71', '#F9C343', '#E7601F', '#df8b8b', '#CE4646')
+model_palette = c('#4F4C4D', '#6994dd', '#8db5f1', '#f9ea71', '#F9C343', '#E7601F','#F57F47', '#df8b8b', '#CE4646')
 
 rotation_hjust = function(angle) {
   rads = (angle - 0) * pi / 180
