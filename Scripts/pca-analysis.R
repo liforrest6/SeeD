@@ -27,7 +27,7 @@ autoplot( geno_pca, data = cimmyt_grow, colour = 'elevation')
 
 
 (geno_biplot = autoplot( geno_pca, data = cimmyt_grow, colour = 'LatNew') + theme_bw())
-png(here(plot_dir, 'Manuscript', 'geno_biplot.png'), width = 491, height = 491)
+pdf(here(plot_dir, 'Manuscript', 'geno_biplot.pdf'), width = 5, height = 5)
 print(geno_biplot)
 dev.off()
 
@@ -40,7 +40,7 @@ var_explained = geno_pca$sdev^2 / sum(geno_pca$sdev^2)
     theme_bw()+
   scale_x_continuous(breaks = c(1:10)) +
   ylim(0, max(var_explained)))
-png(here(plot_dir, 'Manuscript', 'scree_plot.png'), width = 500, height = 500)
+pdf(here(plot_dir, 'Manuscript', 'scree_plot.pdf'), width = 5, height = 5)
 print(scree_plot)
 dev.off()
 

@@ -187,7 +187,7 @@ LD_plots = lapply(top_hits_clumped, function(lead_SNP) {
   lead_corrs = lead_corrs
   if(nrow(lead_corrs) > 1){
     ggplot(lead_corrs, aes(x = abs(BP - lead_SNP_pos), y = r2, color = P < 1e-5)) + 
-      geom_point() +
+      geom_point(size = 0.5) +
       geom_vline(xintercept = 0, color = 'green') +
       geom_hline(yintercept = 0.5, color = 'green')+
       scale_color_manual(values = c('black', 'red')) +
@@ -197,7 +197,10 @@ LD_plots = lapply(top_hits_clumped, function(lead_SNP) {
       scale_x_continuous(limits = c(0, 300000), labels = function(x){x / 1000}) +
       xlab('')+
       ylab('')+
-      theme(legend.position = 'none')
+      theme(legend.position = 'none',
+            title = element_text(size = 6),
+            axis.text = element_text(size = 5),
+            plot.margin = unit(c(0, 0, 0, 0), "mm"))
   }
   
 })
@@ -211,7 +214,7 @@ LD_plots = lapply(top_hits_clumped, function(lead_SNP) {
   inv4m_lead_pos = v4_coords[v4_coords$v4_SNP == 'S4_177835031', 'BP']
   
   inv4m_plot = ggplot(inv4m_corr_matrix %>% filter(V1 == 'S4_177835031'), aes(x = abs(BP - inv4m_lead_pos), y = r2, color = P < 1e-5)) + 
-    geom_point() +
+    geom_point(size = 0.5) +
     geom_vline(xintercept = 0, color = 'green') +
     geom_hline(yintercept = 0.5, color = 'green')+
     scale_color_manual(values = c('black', 'red')) +
@@ -221,21 +224,23 @@ LD_plots = lapply(top_hits_clumped, function(lead_SNP) {
     scale_x_continuous(limits = c(0, 600000), labels = function(x){x / 1000}) +
     xlab('')+
     ylab('')+
-    theme(legend.position = 'none')
+    theme(legend.position = 'none', title = element_text(size = 6),
+          axis.text = element_text(size = 5),
+          plot.margin = unit(c(0, 0, 0, 0), "cm"))
 }
 
 LD_plots[[2]] = inv4m_plot
 all_plots = plot_grid(plotlist = LD_plots[!sapply(LD_plots, is.null)], ncol = 4)
 
 
-png(here(plot_dir, 'Manuscript', 'candidate_gene_LD.png'), width = 750, height = 1000)
-annotate_figure(all_plots, left = textGrob("LD (r2)", rot = 90, vjust = 1, gp = gpar(cex = 1.3)),
-                bottom = textGrob("Distance from lead SNP (kb)", gp = gpar(cex = 1.3)))
+pdf(here(plot_dir, 'Manuscript', 'candidate_gene_LD.pdf'), width = 6.3, height = 7.5)
+annotate_figure(all_plots, left = textGrob("LD (r2)", rot = 90, vjust = 1, gp = gpar(cex = 1.3, fontsize = 7)),
+                bottom = textGrob("Distance from lead SNP (kb)", gp = gpar(cex = 1.3, fontsize = 7)))
 dev.off()
 
 ## check if hsftf9 is in LD with inv9f
 
-all_corr_matrix %>% filter(`SNP B` == 'S9_148365695' & )
+all_corr_matrix %>% filter(`SNP B` == 'S9_148365695' )
 
 lead_hsftf9 = 'S9_148365695'
 lead_hsftf9_pos = v4_coords[v4_coords$v4_SNP == lead_hsftf9, 'BP']

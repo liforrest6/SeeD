@@ -18,7 +18,7 @@ module load R/4.2.2
 
 dir='/group/runciegrp2/Projects/SeeD/'
 
-## parameters = transform traitN ntree output mex
+## parameters = transform traitN ntree output nostress
 
 # Rscript ${dir}/Scripts/randomforest_env_GP.R 1 1 1000 resid
 # Rscript ${dir}/Scripts/randomforest_env_GP.R 1 1 1000 resid _mex
@@ -29,4 +29,4 @@ dir='/group/runciegrp2/Projects/SeeD/'
 # 	Rscript ${dir}/Scripts/phenotypic_GP.R 1 ${i} 1000 deregressed_blups_nostress
 # done
 
-Rscript ${dir}/Scripts/phenotypic_GP.R 1 $SLURM_ARRAY_TASK_ID 1000 deregressed_blups _nostress
+Rscript ${dir}/Scripts/phenotypic_GP.R 1 $SLURM_ARRAY_TASK_ID 1000 deregressed_blups _nostress 

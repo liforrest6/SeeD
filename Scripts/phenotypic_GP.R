@@ -34,6 +34,7 @@ traitN = as.numeric(run[2])
 ntree = as.numeric(run[3])
 output = run[4]
 nostress = run[5]
+mex = run[6]
 
 
 if(is.na(transform)) transform = 1
@@ -41,6 +42,7 @@ if(is.na(traitN)) traitN = 4
 if(is.na(ntree)) ntree = 100
 if(is.na(output)) output = 'deregressed_blups'
 if(is.na(nostress)) nostress = ''
+if(is.na(mex)) mex = ''
 
 
 filterTrial = '_filterTrial'
@@ -70,11 +72,11 @@ finalMat = read.csv(file.path(env_data_dir, 'GEA-climate-invnormtransformed.csv'
 
 #--------------------------------------------------------------------------------------------------------------------------------------------#
 ## test with only central mexican accessions
-# if(mex != '') {
-#   output = paste0(output, mex)
-#   filt_df = read.csv(file.path(env_data_dir, 'central_mexican_accessions.csv'))
-#   finalMat = finalMat %>% filter(Unique.ID %in% filt_df$Unique.ID.Mex)
-# }
+if(mex != '') {
+  output = paste0(output, mex)
+  filt_df = read.csv(file.path(env_data_dir, 'central_mexican_accessions.csv'))
+  finalMat = finalMat %>% filter(Unique.ID %in% filt_df$Unique.ID.Mex)
+}
 
 just_clim = finalMat[-c(1)]
 if(output == 'deregressed_blups') {
@@ -173,7 +175,7 @@ tester_results = foreach(exp = unique(data$Experimento),.combine = bind_rows, .e
 
 
     ## only tester model
-    lm_res_X = mixed.solve(y,X = X_tester)
+    # lm_res_X = mixed.solve(y,X = X_tester)
 
     ## model tester + first 5 PCs (pop structure)
     lm_PC5_res_X = mixed.solve(y, X = cbind(X_tester,sK$u[,1:5]))
@@ -183,6 +185,7 @@ tester_results = foreach(exp = unique(data$Experimento),.combine = bind_rows, .e
 
     ## PCs + GEA SNPs
     lm_enriched_SNPs_X = mixed.solve(y, X = cbind(X_tester, sK$u[,1:5]), Z = enriched_design_byTester)
+    lm_enriched_SNPs_only_X = mixed.solve(y, X = cbind(X_tester), Z = enriched_design_byTester)
     lm_matching_SNPs_X = mixed.solve(y, X = cbind(X_tester, sK$u[,1:5]), Z = matching_design_byTester)
 
     ## all GBS data and GBS + climate
@@ -216,19 +219,24 @@ tester_results = foreach(exp = unique(data$Experimento),.combine = bind_rows, .e
 
     print(sprintf('Made models for %s', tester))
 
-    lm_tester_results = cor(cbind(data_env$residuals, X_tester %*% lm_res_X$beta)[fold_indices,])[2]
+    # lm_tester_results = cor(cbind(data_env$residuals, X_tester %*% lm_res_X$beta)[fold_indices,])[2]
     lm_PC5_results = cor(cbind(data_env$residuals,cbind(X_tester,sK$u[,1:5]) %*% lm_PC5_res_X$beta)[fold_indices,])[2]
     lm_PC5_env_results = cor(cbind(data_env$residuals,
                   as.matrix(cbind(X_tester,sK$u[,1:5], data_env %>% select(tmin, tmax, trange, precipTot, aridityMean, rhMean, elevation))) 
                   %*% lm_PC5_env_X$beta)[fold_indices,])[2]
+
     lm_enriched_SNPs_results = cor(cbind(data_env$residuals, c(cbind(X_tester,sK$u[,1:5]) %*% lm_enriched_SNPs_X$beta + 
       as.matrix(enriched_design_byTester) %*% matrix(lm_enriched_SNPs_X$u, ncol = 1)))[fold_indices,])[2]
+    lm_enriched_SNPs_only_results = cor(cbind(data_env$residuals, c(X_tester %*% lm_enriched_SNPs_X$beta + 
+      as.matrix(enriched_design_byTester) %*% matrix(lm_enriched_SNPs_only_X$u, ncol = 1)))[fold_indices,])[2]
     lm_matching_SNPs_results = cor(cbind(data_env$residuals, c(cbind(X_tester,sK$u[,1:5]) %*% lm_matching_SNPs_X$beta + 
       as.matrix(matching_design_byTester) %*% matrix(lm_matching_SNPs_X$u, ncol = 1)))[fold_indices,])[2]
+
     lm_all_SNPs_results = cor(cbind(data_env$residuals,cbind(X_tester,sK$u[,1:5]) %*% lm_all_SNPs_X$beta + matrix(lm_all_SNPs_X$u, ncol = 1))[fold_indices,])[2]
     lm_all_SNPs_env_results = cor(cbind(data_env$residuals,
       as.matrix(cbind(X_tester,sK$u[,1:5], data_env %>% select(tmin, tmax, trange, precipTot, aridityMean, rhMean, elevation))) 
       %*% lm_all_SNPs_env_X$beta + matrix(lm_all_SNPs_env_X$u, ncol = 1))[fold_indices,])[2]
+
     lm_env_results = cor(cbind(data_env$residuals,
                   as.matrix(cbind(X_tester,data_env %>% select(tmin, tmax, trange, precipTot, aridityMean, rhMean, elevation))) 
                   %*% lm_env_X$beta)[fold_indices,])[2]
@@ -238,12 +246,12 @@ tester_results = foreach(exp = unique(data$Experimento),.combine = bind_rows, .e
 
     tester_result = data.frame(Experimento = exp, fold = tester, 
       n_train = length(y_train), n_test = length(y_test), n_total = length(y_train) + length(y_test),
-               lm_tester = lm_tester_results,
                lm_PC5 = lm_PC5_results,
                lm_PC5_env = lm_PC5_env_results,
                lm_all_SNPs = lm_all_SNPs_results,
                lm_all_SNPs_env = lm_all_SNPs_env_results,
                lm_enriched_SNPs = lm_enriched_SNPs_results,
+               lm_enriched_SNPs_only = lm_enriched_SNPs_only_results,
                lm_matching_SNPs = lm_matching_SNPs_results,
                lm_env = lm_env_results,
                rf_env = rf_env_results,
@@ -258,7 +266,7 @@ tester_results = foreach(exp = unique(data$Experimento),.combine = bind_rows, .e
   fold_result
 }
 
-results_file = sprintf(file.path(analyses_dir, 'PhenotypicPrediction', paste0(output, nostress, filterTrial), 'modelPrediction%s_%s_results_resid.csv'), nostress,trait)
+results_file = sprintf(file.path(analyses_dir, 'PhenotypicPrediction', paste0(output, nostress, filterTrial), 'modelPrediction_sjh%s_%s_results_resid.csv'), nostress,trait)
 print(results_file)
 write.csv(tester_results,file = results_file)
 

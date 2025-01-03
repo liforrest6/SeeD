@@ -200,6 +200,10 @@ all_traits_prediction_ability_deregressed_nostress_filterTrial = data.frame(data
   cbind(fread(sprintf('Analyses/PhenotypicPrediction/deregressed_blups_nostress_filterTrial/modelPrediction_nostress_%s_results_resid.csv', trait_i)), trait_i)
 })))
 
+# mex = data.frame(data.table::rbindlist(lapply(traits[-c(1)], function(trait_i){
+#   cbind(fread(sprintf('Analyses/PhenotypicPrediction/deregressed_blups_mex_nostress_filterTrial/modelPrediction_nostress_%s_results_resid.csv', trait_i)), trait_i)
+# })))
+
 # all_traits_prediction_ability_deregressed = data.frame(data.table::rbindlist(lapply(traits[-c(1)], function(trait_i){
 #   cbind(fread(sprintf('Analyses/PhenotypicPrediction/deregressed_blups/modelPrediction_%s_results_resid.csv', trait_i)), trait_i)
 # })))
@@ -234,6 +238,15 @@ all_traits_prediction_ability_deregressed_melt = pivot_longer(all_traits_predict
                                                                        'lm_PC5_env', 'rf_env', 'rf_env_PC5'),
                                                               names_to = 'model',
                                                               values_to = 'r')
+## just for mexican accessions
+# all_traits_prediction_ability_deregressed_melt = pivot_longer(mex, 
+#                                                               cols = c("lm_PC5", 'lm_matching_SNPs', 'lm_env',
+#                                                                        'lm_enriched_SNPs', 'lm_all_SNPs', 'lm_all_SNPs_env',
+#                                                                        'lm_PC5_env', 'rf_env', 'rf_env_PC5'),
+#                                                               names_to = 'model',
+#                                                               values_to = 'r')
+
+
 
 ## obtain prediction means for each trial
 all_traits_prediction_ability_deregressed_trial = all_traits_prediction_ability_deregressed_nostress_filterTrial %>% 

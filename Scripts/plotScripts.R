@@ -23,19 +23,19 @@ trial_info = read.csv('Phenotype_data/Trial_info.csv')
 (elevation_map = ggmap(terrain_kernels, extent = 'device')+
   geom_point(data = cimmyt_grow, 
              aes(x = LongNew, y = LatNew, color = elevation),
-             pch=16,alpha=0.25,size=1) + 
+             pch=16,alpha=0.25,size=.5) + 
   scale_color_continuous(name = "Elevation (m)", low = 'blue', high = 'red') +
   geom_point(data = trial_info, aes(x = Trial_longitude, y =Trial_latitude),
-             pch = 24, alpha = 1, size = 2, color = '#3da834') +
+             pch = 24, alpha = 1, size = .3, color = '#3da834') +
   theme(axis.ticks.x = element_blank(),
         axis.text.x = element_blank(),
         axis.ticks.y = element_blank(),
         axis.text.y = element_blank(),
         plot.title = element_text(size = 10)) +
-  theme(legend.title = element_text(size = 10),
-        legend.text = element_text(size = 8),
-        legend.position = c(0.15, 0.15),
-        legend.key.size = unit(.5, "lines")) +
+  theme(legend.title = element_text(size = 5),
+        legend.text = element_text(size = 4),
+        legend.position = c(0.2, 0.2),
+        legend.key.size = unit(.2, "lines")) +
   # guides(shape = guide_legend(override.aes = list(size = 6)),
   #        color = guide_legend(override.aes = list(size = 6))) +
   # ggtitle("Geo-coordinates for CIMMYT data", ) +
@@ -50,13 +50,23 @@ trial_info = read.csv('Phenotype_data/Trial_info.csv')
 # print(environmental_map_transfer_plots)
 # dev.off()
 
-png(here(plot_dir, 'Manuscript', 'environmental_map.png'), width = 500, height = 500)
+pdf(here(plot_dir, 'Manuscript', 'environmental_map.pdf'), width = 3, height = 3)
+# ggsave(here(plot_dir, 'Manuscript', 'environmental_map.png'), width = 500, height = 500, dpi = 300)
 print(elevation_map)
 dev.off()
 
-png(here(plot_dir, 'environmental_map.png'), width = 500, height = 500)
-print(elevation_map)
-dev.off()
+ggsave('environmental_map.pdf',
+       plot = elevation_map,
+       device = 'pdf',
+       here(plot_dir, 'Manuscript'),
+       width = 80,
+       height = 80,
+       units = 'mm'
+)
+
+# png(here(plot_dir, 'environmental_map.png'), width = 500, height = 500)
+# print(elevation_map)
+# dev.off()
 
 
 (pca_map = ggmap(terrain_kernels)+
@@ -194,36 +204,21 @@ cimmyt_raw = cimmyt_grow %>% dplyr::select(all_of(initial_columns))
 
 
 (environmental_correlations = ggpairs(cimmyt_raw[4:10], lower = list(continuous = wrap(lowerFn, method = 'loess')),
-        upper = list(continuous = wrap('cor', size = 4)))
+        upper = list(continuous = wrap('cor', size = 2))) + theme(text = element_text(size = 7))
 )
 
 ## ggpairs for correlations
-png(here(plot_dir, 'Manuscript', 'environmental_correlations.png'), width = 500, height = 500)
-print(environmental_correlations)
-dev.off()
+ggsave('environmental_correlations.pdf',
+       plot = environmental_correlations,
+       device = 'pdf',
+       here(plot_dir, 'Manuscript'),
+       width = 5,
+       height = 5,
+       units = 'in'
+)
 
 ## colored autoplot based on climate variable PCA
 ## see pca-analysis.R
-
-
-
-####################################################################################
-## this is for linguistics project
-####################################################################################
-ggmap(terrain_kernels)+
-  geom_point(data = test %>% filter(oiso %in% c('MEX', 'GUA')), 
-             aes(x = LongNew, y = LatNew),
-             pch=16,alpha=0.1,size=2, color = 'red') + 
-  # scale_color_continuous(name = "Elevation (m)", low = 'black', high = 'red') +
-  theme(axis.ticks.x = element_blank(),
-        axis.text.x = element_blank(),
-        axis.ticks.y = element_blank(),
-        axis.text.y = element_blank(),
-        plot.title = element_text(size = 16)) +
-  ggtitle("Geo-coordinates for CIMMYT data", ) +
-  xlab("") +
-  ylab("")
-
 
 
 ####################################################################################
@@ -289,13 +284,15 @@ bonferroni = 1/nrow(gea_results)
 #   ggtitle('Multivariate GEA')
 # )
 
-manhplot = manual_manhattan(gea_results, top_hits_clumped,title = 'Multivariate envGWAS')
+manhplot = manual_manhattan(gea_results, top_hits_clumped,title = '')
 
 
-
-png(here(plot_dir, 'Manuscript', 'gea_qqplot.png'), width = 491, height = 491)
+pdf(here(plot_dir, 'Manuscript', 'gea_qqplot.pdf'), width = 5, height = 5)
 (qqman::qq(gea_results %>% filter(maf > 0.05) %>% pull(P), main = 'qqplot, maf > 0.05'))
 dev.off()
+
+
+
 ####################################################################################
 ## plot GEMMA univariate manhattan plots
 ####################################################################################
@@ -373,12 +370,12 @@ dev.off()
 #                 fig.lab.size = 24)
 
 ## plotting GEA enrichment for manuscript
-significance_pvals = purrr::map2(list(bcw_process, gwph_process, fw_process, ph_process, dtf_process, asi_process),
+significance_pvals = purrr::map2(list(bcw_process, gwph_process, fw_process, ph_process),
                                  list('bare cob weight', 'grain weight per hectare', 'field weight',
-                                      'plant height', 'days to flowering', 'ASI'),
+                                      'plant height'),
                                  calculateVariableSignificance)
 
-for(i in 1:6){
+for(i in 1:4){
   trait_pvals = significance_pvals[[i]]
   lower_pval_count = trait_pvals[trait_pvals$logP >= trait_pvals[1, 'logP'],] %>% count() - 1
   print(lower_pval_count / (nrow(trait_pvals) - 1))
@@ -398,9 +395,7 @@ allTraits_pvals = allTraits_pvals %>% mutate(trait = recode(id,
                                            "1" = 'bare cob weight', 
                                            "2" = 'grain weight per hectare',
                                            "3" = 'field weight',
-                                           "4" = 'plant height',
-                                           "5" ='days to flowering',
-                                           "6" = 'ASI'))
+                                           "4" = 'plant height'))
 
 (manuscript_significance_fig = plotpValueSDManuscript(allTraits_pvals)
 )
@@ -436,7 +431,7 @@ environmental_palette = c('#264653', '#2a9d8f', '#8ab17d', '#e9c46a', '#f4a261',
        aes(x = trait, y = logP, fill = trait)) +
   # stat_summary(fun.data = min.mean.sd.max, geom= 'boxplot')+
   geom_violin(draw_quantiles = T, trim = F) +
-  geom_point(data = allTraits_pvals %>% filter(is_top_hit), color = 'black', fill = 'red', size = 4, shape = 23) +
+  geom_point(data = allTraits_pvals %>% filter(is_top_hit), color = 'black', fill = 'red', size = 2, shape = 23) +
   # ggtitle(str_wrap(phenotype))+
   # scale_x_discrete(angle = 20, size = 12, vjust = 0.5) +
   # scale_color_manual(labels = c('bootstrapped runs of random SNPs', 'top GEA SNPs'), values = c("#8796c7", "#eb4034"), ) +
@@ -445,8 +440,9 @@ environmental_palette = c('#264653', '#2a9d8f', '#8ab17d', '#e9c46a', '#f4a261',
   labs(x = '', y = '-log(p-value)', color = '') +
   theme(legend.text = element_text(size = 15),
         legend.position = 'top',
-        axis.text.x = element_text(angle = 45, size = 12, vjust = 0.5),
-        axis.text.y = element_text(size = 12),
+        axis.text.x = element_text(angle = 45, size = 7, vjust = 0.5),
+        axis.text.y = element_text(size = 7),
+        axis.title.x = element_text(size = 7),
         # axis.ticks = element_text(size = 30),
         # axis.ticks.x = element_text(angle = 20, size = 30, vjust = 0.5),
         # legend.key.size = unit(10, 'cm'),
@@ -460,11 +456,18 @@ environmental_palette = c('#264653', '#2a9d8f', '#8ab17d', '#e9c46a', '#f4a261',
 
 # (gea_and_enrichment = plot_grid(manhplot, plot_grid(enrichment_by_violin, plot_bySNPs, ncol = 2, rel_widths = c(2, 3)), 
 #                                 labels = 'AUTO', nrow = 2, rel_heights = c(2,3)))
-(gea_and_enrichment = plot_grid(manhplot, enrichment_by_violin, labels = 'AUTO', nrow = 2))
+(gea_and_enrichment = plot_grid(manhplot + theme(axis.title.y = element_markdown(size = 7), axis.text.x = element_text(size = 7)), 
+                                enrichment_by_violin, labels = 'AUTO', nrow = 2, rel_widths = c(3, 2)))
 
-png(here(plot_dir, 'Manuscript', 'gea_and_enrichment.png'), width = 700, height = 700)
-grid.draw(gea_and_enrichment)
-dev.off()
+
+ggsave('gea_and_enrichment.pdf',
+       plot = gea_and_enrichment,
+       device = 'pdf',
+       here(plot_dir, 'Manuscript'),
+       width = 80,
+       height = 80,
+       units = 'mm'
+)
 
 ####################################################################################
 ## plot accuracy prediction of models
@@ -577,6 +580,32 @@ png(here(plot_dir, 'Manuscript', 'phenotypic_prediction.png'), width = 600, heig
 grid.draw(phenotypic_prediction)
 dev.off()
 
+ggsave('phenotypic_prediction.pdf',
+       plot = phenotypic_prediction,
+       device = 'pdf',
+       here(plot_dir, 'Manuscript'),
+       width = 160,
+       height = 80,
+       units = 'mm'
+)
+
+## plot aggregate model predictive ability
+aggregate_mean_plot = ggplot(all_results_long %>% filter(model %in% c('lm_PC5', 'lm_matching_SNPs', 'lm_enriched_SNPs', 'lm_all_SNPs',
+                                                             'lm_all_SNPs', 'lm_all_SNPs_env')), 
+                    aes(x = model, y = value, fill = model)) +
+  stat_summary(fun = mean, geom = 'bar') +
+  stat_summary(fun.data = getSEs, geom = 'errorbar', width = 0.1) +
+  geom_jitter(aes(x = model, y = value), size = 0.1, height = 0, width = 0.1) +
+  # facet_wrap(facets = 'Experimento') +
+  ylab('Pearson correlation (r)') +
+  theme_bw() +
+  theme(axis.ticks.x=element_blank(), axis.text.x = element_blank(),
+        axis.title.x = element_blank()) +
+  scale_fill_manual(values = model_palette[1:6], labels = all_labels[1:6]) +
+  # scale_fill_discrete(labels = all_labels) +
+  ggtitle(sprintf('Predictive ability within tester for %s', trait))
+aggregate_mean_plot
+
 ## plot improvement of different models (all SNPs, enriched SNPs, over just using population structure (first 5 PCs))
 all_results$enriched_SNPs_improvement = all_results$lm_enriched_SNPs - all_results$lm_PC5
 all_results$all_SNPs_improvement = all_results$lm_all_SNPs - all_results$lm_PC5
@@ -626,9 +655,9 @@ plot_improvement
 # plot_bySNPs = shift_legend(plot_bySNPs)
 
 # (phenotypic_prediction = plot_grid(plot_byAll, plot_byEnv, labels = 'AUTO', nrow = 2))
-png(here(plot_dir, 'Manuscript', 'phenotypic_prediction_improvement.png'), width = 600, height = 600)
-grid.draw(plot_improvement)
-dev.off()
+# png(here(plot_dir, 'Manuscript', 'phenotypic_prediction_improvement.png'), width = 600, height = 600)
+# grid.draw(plot_improvement)
+# dev.off()
 
 ## this plot is nice for a talk without introducing GEA
 (prediction_noGEA = ggplot(all_results_long %>% filter(model %in% c('lm_PC5', 'rf_env', 'lm_all_SNPs')), 
@@ -642,7 +671,7 @@ dev.off()
 ### test prediction accuracy across all traits
 all_traits_prediction_plot_list = list()
 for(trait_i in traits[-c(1)]){
-  prediction_accuracy = read.csv(here(sprintf('Analyses/PhenotypicPrediction/deregressed_blups_nostress/modelPrediction_nostress_%s_results_resid.csv', trait_i)))
+  prediction_accuracy = read.csv(here(sprintf('Analyses/PhenotypicPrediction/deregressed_blups_nostress_filterTrial/modelPrediction_nostress_%s_results_resid.csv', trait_i)))
   all_results = merge(prediction_accuracy, trial_master[c('Experimento', 'Localidad', 'Año', 'latitude', 'Trial_elevation', 'meanTemp', 'annualPrecipitation')])
   all_results = all_results[order(all_results$Trial_elevation),]
   all_results$name = paste(all_results$Localidad, all_results$Año)
@@ -662,7 +691,7 @@ for(trait_i in traits[-c(1)]){
   
 }
 
-create_prediction_comparison_plot = function(trait_i) {
+create_prediction_comparison_plot_byTrial = function(trait_i) {
   prediction_accuracy = read.csv(here(sprintf('Analyses/PhenotypicPrediction/deregressed_blups_nostress_filterTrial/modelPrediction_nostress_%s_results_resid.csv', trait_i)))
   all_results = merge(prediction_accuracy, trial_master[c('Experimento', 'Localidad', 'Año', 'latitude', 'Trial_elevation', 'meanTemp', 'annualPrecipitation')])
   all_results = all_results[order(all_results$Trial_elevation),]
@@ -677,6 +706,8 @@ create_prediction_comparison_plot = function(trait_i) {
                                   levels = c("lm_PC5", 'lm_matching_SNPs', 
                                              'lm_enriched_SNPs', 'lm_all_SNPs', 'lm_all_SNPs_env',
                                              'lm_PC5_env', 'rf_env', 'rf_env_PC5'), ordered = TRUE)
+  if(trait_i == 'GrainWeightPerHectareCorrected')
+    trait_i = 'GrainWeight'
   plot_byAll = ggplot(all_results_long %>% filter(model %in% c('lm_PC5', 'lm_matching_SNPs', 'lm_enriched_SNPs', 'lm_all_SNPs',
                                                                'lm_all_SNPs', 'lm_all_SNPs_env')), aes(x = model, y = value, fill = model)) +
     stat_summary(fun = mean, geom = 'bar') +
@@ -686,21 +717,182 @@ create_prediction_comparison_plot = function(trait_i) {
     ylab('Pearson correlation (r)') +
     theme_bw() +
     theme(axis.ticks.x=element_blank(), axis.text.x = element_blank(), 
-          axis.title.x = element_blank(), strip.text.x = element_text(size = 7, margin = margin(3, 0, 3, 0, unit = 'pt')))+
+          axis.title.x = element_blank(), strip.text.x = element_text(size = 5, margin = margin(3, 0, 3, 0, unit = 'pt')))+
     scale_fill_manual(values = model_palette[1:6], labels = all_labels[1:6]) +
-    ggtitle(sprintf('%s', trait_i))
+    ylim(c(-0.05, 0.4)) +
+    ggtitle(sprintf('%s', gsub("([[:lower:]])([[:upper:]])", "\\1 \\2", trait_i)))
   plot_byAll
 }
 
-all_traits_prediction_plot_list = lapply(traits[-c(1)], create_prediction_comparison_plot)
+create_prediction_comparison_plot_aggregate = function(trait_i) {
+  prediction_accuracy = read.csv(here(sprintf('Analyses/PhenotypicPrediction/deregressed_blups_nostress_filterTrial/modelPrediction_nostress_%s_results_resid.csv', trait_i)))
+  all_results = merge(prediction_accuracy, trial_master[c('Experimento', 'Localidad', 'Año', 'latitude', 'Trial_elevation', 'meanTemp', 'annualPrecipitation')])
+  all_results = all_results[order(all_results$Trial_elevation),]
+  all_results$name = paste(all_results$Localidad, all_results$Año)
+  all_results$name = factor(all_results$name, levels = all_results$name %>% unique())
+  
+  ## plot all models together for R predictive accuracy
+  all_results_long = pivot_longer(all_results, cols = c(lm_PC5, rf_env, rf_env_PC5, lm_PC5_env, 
+                                                        lm_all_SNPs, lm_all_SNPs_env, 
+                                                        lm_enriched_SNPs, lm_matching_SNPs), names_to = 'model')
+  all_results_long$model = factor(all_results_long$model, 
+                                  levels = c("lm_PC5", 'lm_matching_SNPs', 
+                                             'lm_enriched_SNPs', 'lm_all_SNPs', 'lm_all_SNPs_env',
+                                             'lm_PC5_env', 'rf_env', 'rf_env_PC5'), ordered = TRUE)
+  if(trait_i == 'GrainWeightPerHectareCorrected')
+    trait_i = 'GrainWeight'
+  plot_byAll = ggplot(all_results_long %>% filter(model %in% c('lm_PC5', 'lm_matching_SNPs', 'lm_enriched_SNPs', 'lm_all_SNPs',
+                                                               'lm_all_SNPs', 'lm_all_SNPs_env')), aes(x = model, y = value, fill = model)) +
+    stat_summary(fun = mean, geom = 'bar') +
+    stat_summary(fun.data = getSEs, geom = 'errorbar', width = 0.1) +
+    # geom_jitter(aes(x = model, y = value), size = 0.1, height = 0, width = 0.1) +
+    # facet_wrap(facets = 'Experimento') +
+    ylab('Pearson correlation (r)') +
+    theme_bw() +
+    theme(axis.ticks.x=element_blank(), axis.text.x = element_blank(), 
+          axis.title.x = element_blank(), strip.text.x = element_text(size = 7, margin = margin(3, 0, 3, 0, unit = 'pt')))+
+    scale_fill_manual(values = model_palette[1:6], labels = all_labels[1:6]) +
+    ylim(c(0, 0.4)) +
+    ggtitle(sprintf('%s', gsub("([[:lower:]])([[:upper:]])", "\\1 \\2", trait_i)))
+  plot_byAll
+}
 
-(all_traits_prediction_plots = plot_grid(plotlist = lapply(all_traits_prediction_plot_list, function(p) {p + theme(legend.position = 'none')}), 
-                                                          nrow = 3, ncol = 2, labels = c('', 'A', 'B', 'C', 'D', 'E'),
-                                                          legend = get_legend(all_traits_prediction_plot_list[[1]] + theme(legend.position = 'left')))
+create_prediction_comparison_plot_environment_byTrial = function(trait_i) {
+  prediction_accuracy = read.csv(here(sprintf('Analyses/PhenotypicPrediction/deregressed_blups_nostress_filterTrial/modelPrediction_nostress_%s_results_resid.csv', trait_i)))
+  all_results = merge(prediction_accuracy, trial_master[c('Experimento', 'Localidad', 'Año', 'latitude', 'Trial_elevation', 'meanTemp', 'annualPrecipitation')])
+  all_results = all_results[order(all_results$Trial_elevation),]
+  all_results$name = paste(all_results$Localidad, all_results$Año)
+  all_results$name = factor(all_results$name, levels = all_results$name %>% unique())
+  
+  ## plot all models together for R predictive accuracy
+  all_results_long = pivot_longer(all_results, cols = c(lm_PC5, rf_env, rf_env_PC5, lm_PC5_env, 
+                                                        lm_all_SNPs, lm_all_SNPs_env, lm_env,
+                                                        lm_enriched_SNPs, lm_matching_SNPs), names_to = 'model')
+  all_results_long$model = factor(all_results_long$model, 
+                                  levels = c("lm_PC5", 'lm_matching_SNPs', 'lm_env',
+                                             'lm_enriched_SNPs', 'lm_all_SNPs', 'lm_all_SNPs_env',
+                                             'lm_PC5_env', 'rf_env', 'rf_env_PC5'), ordered = TRUE)
+  if(trait_i == 'GrainWeightPerHectareCorrected')
+    trait_i = 'GrainWeight'
+  plot_byEnv = ggplot(all_results_long %>% filter(model %in% c('lm_PC5', 'lm_env', 'rf_env', 'rf_env_PC5')), 
+                      aes(x = model, y = value, fill = model)) +
+    stat_summary(fun = mean, geom = 'bar') +
+    stat_summary(fun.data = getSEs, geom = 'errorbar', width = 0.1) +
+    geom_jitter(aes(x = model, y = value), size = 0.1, height = 0, width = 0.1) +
+    facet_wrap(facets = 'Experimento') +
+    ylab('Pearson correlation (r)') +
+    theme_bw() +
+    theme(axis.ticks.x=element_blank(), axis.text.x = element_blank(), 
+          axis.title.x = element_blank(), strip.text.x = element_text(size = 5, margin = margin(3, 0, 3, 0, unit = 'pt')))+
+    scale_fill_manual(values = model_palette[c(1, 7, 8, 9)], labels = all_labels[c(1, 7, 8, 9)]) +
+    ylim(c(-0.05, 0.4)) +
+    ggtitle(sprintf('%s', gsub("([[:lower:]])([[:upper:]])", "\\1 \\2", trait_i)))
+  plot_byEnv
+}
+
+create_prediction_comparison_plot_environment_aggregate = function(trait_i) {
+  prediction_accuracy = read.csv(here(sprintf('Analyses/PhenotypicPrediction/deregressed_blups_nostress_filterTrial/modelPrediction_nostress_%s_results_resid.csv', trait_i)))
+  all_results = merge(prediction_accuracy, trial_master[c('Experimento', 'Localidad', 'Año', 'latitude', 'Trial_elevation', 'meanTemp', 'annualPrecipitation')])
+  all_results = all_results[order(all_results$Trial_elevation),]
+  all_results$name = paste(all_results$Localidad, all_results$Año)
+  all_results$name = factor(all_results$name, levels = all_results$name %>% unique())
+  
+  ## plot all models together for R predictive accuracy
+  all_results_long = pivot_longer(all_results, cols = c(lm_PC5, rf_env, rf_env_PC5, lm_PC5_env, 
+                                                        lm_all_SNPs, lm_all_SNPs_env, lm_env,
+                                                        lm_enriched_SNPs, lm_matching_SNPs), names_to = 'model')
+  all_results_long$model = factor(all_results_long$model, 
+                                  levels = c("lm_PC5", 'lm_matching_SNPs', 'lm_env',
+                                             'lm_enriched_SNPs', 'lm_all_SNPs', 'lm_all_SNPs_env',
+                                             'lm_PC5_env', 'rf_env', 'rf_env_PC5'), ordered = TRUE)
+  if(trait_i == 'GrainWeightPerHectareCorrected')
+    trait_i = 'GrainWeight'
+  plot_byEnv = ggplot(all_results_long %>% filter(model %in% c('lm_PC5', 'lm_env', 'rf_env', 'rf_env_PC5')), 
+         aes(x = model, y = value, fill = model)) +
+    stat_summary(fun = mean, geom = 'bar') +
+    stat_summary(fun.data = getSEs, geom = 'errorbar', width = 0.1) +
+    # geom_jitter(aes(x = model, y = value), size = 0.1, height = 0, width = 0.1) +
+    # facet_wrap(facets = 'Experimento') +
+    ylab('Pearson correlation (r)') +
+    theme_bw() +
+    theme(axis.ticks.x=element_blank(), axis.text.x = element_blank(), axis.title.x = element_blank()) +
+    scale_fill_manual(values = model_palette[c(1, 7, 8, 9)], labels = all_labels[c(1, 7, 8, 9)]) +
+    ylim(c(0, 0.4)) +
+    ggtitle(sprintf('%s', gsub("([[:lower:]])([[:upper:]])", "\\1 \\2", trait_i)))
+  plot_byEnv
+}
+
+all_traits_prediction_plot_list_byTrial = lapply(traits[-c(1, 2)], create_prediction_comparison_plot_byTrial)
+all_traits_prediction_plot_list_aggregate = lapply(traits[-c(1, 2)], create_prediction_comparison_plot_aggregate)
+all_traits_prediction_plot_list_environment_byTrial = lapply(traits[-c(1, 2)], create_prediction_comparison_plot_environment_byTrial)
+all_traits_prediction_plot_list_environment_aggregate = lapply(traits[-c(1, 2)], create_prediction_comparison_plot_environment_aggregate)
+
+(all_traits_prediction_plots_aggregate = plot_grid(
+  plot_grid(plotlist = lapply(all_traits_prediction_plot_list_aggregate, function(p) {p + theme(legend.position = 'none', text = element_text(size = 6))}), 
+                                                          nrow = 1, ncol = 5, labels = c('', 'A', 'B', 'C', 'D'),
+                                                          legend = get_legend(all_traits_prediction_plot_list_aggregate[[1]] + 
+                                                                                theme(legend.position = 'left',text = element_text(size = 6)))),
+  plot_grid(plotlist = lapply(all_traits_prediction_plot_list_environment_aggregate, function(p) {p + theme(legend.position = 'none', text = element_text(size = 6))}), 
+            nrow = 1, ncol = 5, labels = c('', 'E', 'F', 'G', 'H'),
+            legend = get_legend(all_traits_prediction_plot_list_environment_aggregate[[1]] + theme(legend.position = 'left', text = element_text(size = 6)))),
+  nrow = 2
+))
+
+ggsave('all_traits_prediction_plots_aggregate.pdf',
+       plot = all_traits_prediction_plots_aggregate,
+       device = 'pdf',
+       here(plot_dir, 'Manuscript'),
+       width = 160,
+       height = 80,
+       units = 'mm'
 )
-png(here(plot_dir, 'Manuscript', 'all_traits_prediction_plots.png'), width = 750, height = 900)
-print(all_traits_prediction_plots)
-dev.off()
+
+(all_traits_prediction_plots = 
+  plot_grid(plotlist = lapply(all_traits_prediction_plot_list_byTrial, function(p) {p + theme(legend.position = 'none', text = element_text(size = 8))}), 
+            nrow = 3, ncol = 2, labels = c('', 'A', 'B', 'C', 'D'),
+            legend = get_legend(all_traits_prediction_plot_list_byTrial[[1]] + theme(legend.position = 'left', text = element_text(size = 8))))
+)
+  
+ggsave('all_traits_prediction_plots.pdf',
+       plot = all_traits_prediction_plots,
+       device = 'pdf',
+       here(plot_dir, 'Manuscript'),
+       width = 160,
+       height = 200,
+       units = 'mm'
+)
+
+(all_traits_prediction_plots_byEnv = 
+    plot_grid(plotlist = lapply(all_traits_prediction_plot_list_environment_byTrial, function(p) {p + theme(legend.position = 'none', text = element_text(size = 8))}), 
+              nrow = 3, ncol = 2, labels = c('', 'A', 'B', 'C', 'D'),
+              legend = get_legend(all_traits_prediction_plot_list_environment_byTrial[[1]] + theme(legend.position = 'left', text = element_text(size = 8))))
+)
+
+ggsave('all_traits_prediction_plots_byEnv.pdf',
+       plot = all_traits_prediction_plots_byEnv,
+       device = 'pdf',
+       here(plot_dir, 'Manuscript'),
+       width = 160,
+       height = 200,
+       units = 'mm'
+)
+
+# for BAPG talk
+plot_byAll = ggplot(all_results_long %>% filter(model %in% c('lm_PC5', 'lm_enriched_SNPs', 'lm_all_SNPs',
+                                                             'lm_all_SNPs_env', 'rf_env')), 
+                    aes(x = model, y = value, fill = model)) +
+  stat_summary(fun = mean, geom = 'bar') +
+  stat_summary(fun.data = getSEs, geom = 'errorbar', width = 0.1) +
+  # geom_jitter(aes(x = model, y = value), size = 0.1, height = 0, width = 0.1) +
+  facet_wrap(facets = 'Experimento') +
+  ylab('Pearson correlation (r)') +
+  theme_bw() +
+  theme(axis.ticks.x=element_blank(), axis.text.x = element_blank(),
+        axis.title.x = element_blank()) +
+  scale_fill_manual(values = model_palette[c(1,3,4,5,8)], labels = all_labels[c(1,3,4,5,8)]) +
+  # scale_fill_discrete(labels = all_labels) +
+  ggtitle(sprintf('Predictive ability within tester for %s', trait))
+plot_byAll
 
 # read_prediction_accuracy = function(trait_i) {
 #   prediction_accuracy = read.csv(here(sprintf('Analyses/PhenotypicPrediction/fiveModels/modelPrediction_%s_results_resid.csv', trait_i)))
@@ -796,9 +988,16 @@ hsftf9_map = ggmap(terrain_kernels)+
   ylab("")
 
 (allele_spatial_distributions = plot_grid(inv4m_map, hsftf9_map, labels = 'AUTO', nrow = 2))
-png(here(plot_dir, 'Manuscript', 'allele_spatial_distributions.png'), width = 600, height = 750)
-print(allele_spatial_distributions)
-dev.off()
+
+ggsave('allele_spatial_distributions.pdf',
+       plot = allele_spatial_distributions,
+       device = 'pdf',
+       here(plot_dir, 'Manuscript'),
+       width = 160,
+       height = 200,
+       units = 'mm'
+)
+
 
 
 ####################################################################################

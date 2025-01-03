@@ -6,6 +6,7 @@ library(MASS)
 library(brms)
 library(viridis)
 
+source(here::here('config.R'))
 
 # data = fread('../prepped_data/blups_std.csv',data.table=F)
 # data = fread(file.path(phenotype_data_dir, 'blups_deregressed.csv'),data.table=F)
@@ -227,22 +228,22 @@ precipitation_models_linear = createTransferModels('precipitation', linear, abso
                              ggarrange(plotlist = precipitation_models_linear[[1]][3:5], common.legend = T, nrow = 1, ncol = 3, legend = 'right'),
                              common.legend = F, nrow = 3, labels = c('A', 'B', 'C')))
 
-png(here(plot_dir, 'Manuscript', 'elevation_transfer_plots.png'), width = 700, height = 700)
-print(elevation_transfer_plots)
-dev.off()
-png(here(plot_dir, 'Manuscript', 'temp_transfer_plots.png'), width = 700, height = 700)
-print(temp_transfer_plots)
-dev.off()
-png(here(plot_dir, 'Manuscript', 'precipitation_transfer_plots.png'), width = 700, height = 700)
-print(precipitation_transfer_plots)
-dev.off()
-
-png(here(plot_dir, 'Manuscript', 'quadratic_transfer_plots.png'), width = 700, height = 700)
-print(quadratic_plots)
-dev.off()
-png(here(plot_dir, 'Manuscript', 'linear_transfer_plots.png'), width = 700, height = 700)
-print(linear_plots)
-dev.off()
+# png(here(plot_dir, 'Manuscript', 'elevation_transfer_plots.png'), width = 700, height = 700)
+# print(elevation_transfer_plots)
+# dev.off()
+# png(here(plot_dir, 'Manuscript', 'temp_transfer_plots.png'), width = 700, height = 700)
+# print(temp_transfer_plots)
+# dev.off()
+# png(here(plot_dir, 'Manuscript', 'precipitation_transfer_plots.png'), width = 700, height = 700)
+# print(precipitation_transfer_plots)
+# dev.off()
+# 
+# png(here(plot_dir, 'Manuscript', 'quadratic_transfer_plots.png'), width = 700, height = 700)
+# print(quadratic_plots)
+# dev.off()
+# png(here(plot_dir, 'Manuscript', 'linear_transfer_plots.png'), width = 700, height = 700)
+# print(linear_plots)
+# dev.off()
 
 # (transfer_plots = cowplot::plot_grid(plotlist = plots[3:6],nrow = 2, ncol=2))
 # (transfer_plots = ggarrange(plotlist = list(elevation_models_quadratic[[1]][3][[1]], 
@@ -305,10 +306,10 @@ yield_traits = c('FieldWeight', 'GrainWeightPerHectareCorrected','BareCobWeight'
     ylab('Polynomial max/min precipitation') +
     scale_color_discrete(name = 'Polynomial coeff sign', labels = c('Negative', 'Positive')))
 
-(transfer_optimality = ggarrange(elevation_optimal_plots, temp_optimal_plots, common.legend = T, labels = c('A', 'B'), nrow = 2))
-png(here(plot_dir, 'Manuscript', 'transfer_optimality.png'), width = 700, height = 700)
-print(transfer_optimality)
-dev.off()
+# (transfer_optimality = ggarrange(elevation_optimal_plots, temp_optimal_plots, common.legend = T, labels = c('A', 'B'), nrow = 2))
+# png(here(plot_dir, 'Manuscript', 'transfer_optimality.png'), width = 700, height = 700)
+# print(transfer_optimality)
+# dev.off()
 
 
 i = 0
@@ -474,7 +475,7 @@ slope.emt
 files = list.files(here(analyses_dir, 'TransferPlots'), pattern='.rds',full.names = T)
 optimum_posteriors = list()
 slope_posteriors = c()
-for(file in files[2]) {
+for(file in files) {
   trait = strsplit(file,'_')[[1]];trait = trait[length(trait)];trait = sub('.rds','',trait,fixed=T)
   env = strsplit(file,'_')[[1]][[2]]
   bm_list = readRDS(file)
@@ -520,6 +521,7 @@ for(file in files[2]) {
       geom_abline(slope=1,intercept=0,color='red')+
       geom_segment(data=h_posteriors_summary,aes(x=Env_trial,y=`low.2.5.`,xend=Env_trial,yend=`high.97.5.`,group=name,color=name))+
       geom_point(data=h_posteriors_summary,aes(x=Env_trial,y=mean,color=name),size=2) +
+      theme(text = element_text(size = 5)) +
       theme_bw() 
     # geom_jitter(alpha = 0.01,aes(y=value,color=name)) +
     # geom_violin(aes(y=value,group = name,color=name),position = position_dodge())
@@ -593,6 +595,7 @@ getTrialPosteriors = function(file) {
     # geom_point(data = points,aes(x = Env_genotype,y=y)) + 
     geom_vline(data = ribbons_max,aes(xintercept = Env_genotype),color='red') + 
     geom_line(aes(x=Env_genotype,y=mean),linewidth=2,color='blue') +
+    theme(text = element_text(size = 5)) +
     theme_bw()
   # print(p)
   p
@@ -653,14 +656,15 @@ getTrialPosteriorsCombined = function(file) {
     geom_vline(data = ribbons_max,aes(xintercept = Env_genotype, color = Env_trial)) + 
     geom_line(aes(x=Env_genotype,y=mean, group = Experimento,color = Env_trial),linewidth=1) +
     # scale_color_continuous(name = 'Trial value', low = 'blue', high = 'yellow') +
-    scale_color_viridis(name = 'Trial value') +
+    scale_color_viridis(name = sprintf('trial %s', env)) +
+    theme(text = element_text(size = 5)) +
     theme_bw()
   # print(p)
   p
 }
 
 experimento_posteriors_combined = lapply(files, getTrialPosteriorsCombined)
-experimento_posteriors_combined
+# experimento_posteriors_combined
 
 pdf(here(plot_dir,'Experimento_posteriors_combined.pdf'))
 for(plot in experimento_posteriors_combined) {
@@ -668,42 +672,156 @@ for(plot in experimento_posteriors_combined) {
 }
 dev.off()
 
+alter_curve_plot = function(p) {
+  env_var = p$labels$title
+  units = ''
+  if(grepl('elevation', env_var, fixed = T))
+  {units = 'Trial elevation (m)'} else if(grepl('precipitation', env_var, fixed = T))
+  {units = 'Trial precipitation (mm)'} else if(grepl('temperature', env_var, fixed = T))
+  {units = 'Trial temperature (°C)'}
+  p + 
+    theme(legend.position = 'bottom',
+          text = element_text(size = 6),
+          legend.key.height = unit(.3, "lines"),
+          legend.key.width = unit(1, "lines"),
+          legend.margin=margin(0,0,0,0),
+          legend.box.margin=margin(-10,0,0,0)) +
+    scale_color_viridis(name = units) +
+    ggtitle('')
+}
+
+alter_fit_plot = function(p) {
+  p + 
+    theme(legend.position = 'none',
+          text = element_text(size = 6)) +
+    ggtitle('')
+}
+
 (transfer_plots_brms = plot_grid(plot_grid(plotlist = lapply(experimento_posteriors_combined[c(2, 6, 10)], 
-                                                             function(p) p + theme(legend.position = 'bottom') + ggtitle('')), 
+                                                             alter_curve_plot), 
                                                              ncol = 3, labels = c('A', 'B', 'C')),
                             plot_grid(plotlist = lapply(optimum_posteriors[c(2, 6, 10)], 
-                                                        function(p) p + theme(legend.position = 'none') + ggtitle('')), 
+                                                        alter_fit_plot), 
                                       ncol = 3, labels = c('D', 'E', 'F')),
-                            nrow = 2))
+                            nrow = 2, rel_heights = c(1, 1)))
 
-png(here(plot_dir, 'Manuscript', 'transfer_plots_brms.png'), width = 800, height = 700)
-print(transfer_plots_brms)
-dev.off()
-
-png(here(plot_dir, 'Manuscript', 'slope_posterior_plot.png'), width = 600, height = 600)
-print(slope_posterior_plot)
-dev.off()
+ggsave('transfer_plots_brms.pdf',
+       plot = transfer_plots_brms,
+       device = 'pdf',
+       here(plot_dir, 'Manuscript'),
+       width = 160,
+       height = 80,
+       units = 'mm'
+)
+       
+ggsave('slope_posterior_plot.pdf',
+       plot = slope_posterior_plot,
+       device = 'pdf',
+       here(plot_dir, 'Manuscript'),
+       width = 3,
+       height = 3,
+       units = 'in'
+)
 
 (all_trial_posteriors = plot_grid(plotlist = lapply(experimento_posteriors_combined[c(1, 5, 9,
                                                                                2, 6, 10,
                                                                                3, 7, 11,
                                                                                4, 8, 12)],
-                                                    function(p) p + theme(legend.position = 'bottom')), 
+                                                    function(p) p + theme(legend.position = 'bottom',
+                                                                          text = element_text(size = 6),
+                                                                          legend.key.height = unit(.3, "lines"),
+                                                                          legend.key.width = unit(1, "lines"))), 
                                   ncol = 3, labels = 'auto'))
-png(here(plot_dir, 'Manuscript', 'all_trial_posteriors.png'), width = 700, height = 700)
-print(all_trial_posteriors)
-dev.off()
+
+ggsave('all_trial_posteriors.pdf',
+       plot = all_trial_posteriors,
+       device = 'pdf',
+       here(plot_dir, 'Manuscript'),
+       width = 7,
+       height = 7,
+       units = 'in'
+)
 
 (all_optimum_posteriors = plot_grid(plotlist = lapply(optimum_posteriors[c(1, 5, 9,
                                                                             2, 6, 10,
                                                                             3, 7, 11,
                                                                             4, 8, 12)], 
-                                                      function(p) p + theme(legend.position = 'none')), 
+                                                      function(p) p + theme(legend.position = 'none',
+                                                                            text = element_text(size = 6),
+                                                                            legend.key.height = unit(.3, "lines"),
+                                                                            legend.key.width = unit(1, "lines"))), 
                                                       ncol = 3, labels = 'auto'))
-png(here(plot_dir, 'Manuscript', 'all_optimum_posteriors.png'), width = 700, height = 700)
-print(all_optimum_posteriors)
-dev.off()
 
+
+ggsave('all_optimum_posteriors.pdf',
+       plot = all_optimum_posteriors,
+       device = 'pdf',
+       here(plot_dir, 'Manuscript'),
+       width = 7,
+       height = 7,
+       units = 'in'
+)
+
+
+## for talk
+lapply(experimento_posteriors_combined[c(2, 6, 10)], 
+       alter_curve_plot)
+alter_curve_plot(experimento_posteriors_combined[[1]])
+
+{
+  file = files[2]
+  trait = strsplit(file,'_')[[1]];trait = trait[length(trait)];trait = sub('.rds','',trait,fixed=T)
+  env = strsplit(file,'_')[[1]][[2]]
+  bm_list = readRDS(file)
+  bm = bm_list$bm
+  d = bm_list$data_trait
+  trial_data = droplevels(d[sapply(unique(d$Experimento),function(x) which(d$Experimento == x)[1]),])
+  trial_data = trial_data[order(trial_data$Env_trial),]
+  ribbons = c()
+  points = c()
+  for(exp in trial_data$Experimento) {
+    d_exp = subset(d,Experimento==exp)
+    d_exp$y_resid = resid(lm(y~Tester,d_exp))
+    X = seq(min(d_exp$Env_genotype_std),max(d_exp$Env_genotype_std),length=100)
+    newdata=data.frame(
+      Experimento=exp, ExpTester = NA,
+      Env_genotype_std = X,
+      Env_trial_std = d_exp$Env_trial_std[1]
+    )
+    # newdata$ExpTester[-1] = NA
+    pre = posterior_epred(bm,newdata = newdata)
+    pre_summary = apply(pre,2,function(y) {
+      c(low = quantile(y,.025),high=quantile(y,.975),mean=mean(y))
+    })
+    pre_summary = data.frame(Env_genotype = X,t(pre_summary))
+    rescale = function(x,bm_list) x*bm_list$std_x_sd + bm_list$std_x_mean
+    pre_summary$Env_genotype = rescale(pre_summary$Env_genotype,bm_list)
+    # pre_summary$low.2.5. = rescale(pre_summary$low.2.5.,bm_list)
+    # pre_summary$geno_x = rescale(pre_summary$geno_x,bm_list)
+    # pre_summary$geno_x = rescale(pre_summary$geno_x,bm_list)
+    ribbons = rbind(ribbons,data.frame(Experimento = exp,pre_summary, Env_trial = d_exp$Env_trial[1]))
+    # points = rbind(points,data.frame(Experimento = exp,y = d_exp$y,Env_genotype = d_exp$Env_genotype))
+    points = rbind(points,data.frame(Experimento = exp,y = d_exp$y_resid, Env_genotype = d_exp$Env_genotype))
+  }
+  ribbons$Experimento = factor(ribbons$Experimento,levels = trial_data$Experimento)
+  ribbons_max = tapply(1:nrow(ribbons),ribbons$Experimento,function(x) ribbons$Env_genotype[x][which.max(ribbons$mean[x])])
+  ribbons_max = data.frame(Experimento = factor(names(ribbons_max),levels = trial_data$Experimento),Env_genotype = ribbons_max, Env_trial = trial_data$Env_trial)
+  points$Experimento = factor(points$Experimento,levels = trial_data$Experimento)
+  p=ggplot(ribbons %>% filter(Experimento == 'mBCL2011')) + 
+    # ggtitle(sprintf('%s, %s', trait, env)) + 
+    xlab(sprintf('Accession %s-of-origin', env)) + 
+    ylab('Accession field weight (scaled BLUP)') +
+    # geom_ribbon(aes(x=Env_genotype,ymin = low.2.5.,ymax = high.97.5.),alpha = 0.5) +
+    geom_point(data = points %>% filter(Experimento == 'mBCL2011'),aes(x = Env_genotype,y=y)) +
+    geom_vline(data = ribbons_max ,aes(xintercept = Env_genotype, color = Env_trial)) + 
+    geom_line(aes(x=Env_genotype,y=mean, group = Experimento,color = Env_trial),linewidth=1) +
+    # scale_color_continuous(name = 'Trial value', low = 'blue', high = 'yellow') +
+    scale_color_viridis(name = 'Trial elevation (m)') +
+    theme(text = element_text(size = 5)) +
+    theme_bw()
+  # print(p)
+  p
+}
 
 ## for poster
 # (all_trial_posteriors = plot_grid(plotlist = lapply(experimento_posteriors_combined[c(2, 6, 10,
@@ -716,11 +834,11 @@ dev.off()
 ## manuscript plotting
 
 
-(environmental_map_transfer_plots = plot_grid(
-  plot_grid(elevation_map, transfer_plots, labels = 'AUTO', nrow = 2, rel_heights = c(2,1))))
-png(here(plot_dir, 'Manuscript', 'environmental_map_transfer_plots.png'), width = 600, height = 600)
-print(environmental_map_transfer_plots)
-dev.off()
+# (environmental_map_transfer_plots = plot_grid(
+#   plot_grid(elevation_map, transfer_plots, labels = 'AUTO', nrow = 2, rel_heights = c(2,1))))
+# png(here(plot_dir, 'Manuscript', 'environmental_map_transfer_plots.png'), width = 600, height = 600, dpi = 300)
+# print(environmental_map_transfer_plots)
+# dev.off()
 
 ## old manual plotting
 # for(trait in traitNames) {

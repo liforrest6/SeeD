@@ -246,8 +246,10 @@ res_spclust %>%
     scale_color_discrete(name = "Fold type") +
     ylab("Pearson's correlation (r)") +
     xlab('') +
-    # labs(color = '10-fold cross-validation')+
     theme_bw() +
+    theme(axis.text.x = element_text(angle = -45, size = 5, vjust = rotation_vjust(-45), hjust = rotation_hjust(45)))+
+    # labs(color = '10-fold cross-validation')+
+
     # theme(text = element_text(size = 16),
           # legend.position = 'top') +
     # theme_bw() +
@@ -263,13 +265,14 @@ res_spclust %>%
     scale_color_discrete(name = "Fold type") +
     ylab("RMSE") +
     xlab('') +
+    theme(axis.text.x = element_text(angle = -45, size = 5, vjust = rotation_vjust(-45), hjust = rotation_hjust(45))) +
   expand_limits(y = c(0, 1)) +
   # ggtitle('RMSE predictive ability')
     ggtitle('')
 )
 
-## random CV for GPoE for slides
-# (r_boxplot_figure = ggplot(res_spclust %>% filter(fold_type == 'random'),aes(x=trait,y=r, color = fold_type)) + 
+# ## random CV for GPoE for slides
+# (r_boxplot_figure = ggplot(res_spclust ,aes(x=trait,y=r, color = fold_type)) +
 #     geom_boxplot() +
 #     expand_limits(y = c(0, 1)) +
 #     ylab("Pearson's correlation (r)") +
@@ -281,7 +284,8 @@ res_spclust %>%
 #     # theme_bw() +
 #     # theme(axis.text.x = element_text(size = 16),
 #     #       axis.text.y = element_text(size = 16)) +
-#     ggtitle('Genomic Prediction of Environment (GPoE) predictive ability')
+#     scale_color_manual(values = c('#8ACE00', 'purple'))
+#     # ggtitle('Genomic Prediction of Environment (GPoE) predictive ability')
 # )
 
 
@@ -293,7 +297,8 @@ res_spclust %>%
     # ggtitle("Spatial fold Pearson's r") +
     theme_bw() +
     theme(axis.text.x = element_text(angle = -70, size = 8, vjust = rotation_vjust(-70), hjust = rotation_hjust(70)),
-          plot.title = element_text(size = 10)) + 
+          plot.title = element_text(size = 10),
+          axis.title = element_text(size = 8)) + 
     xlab('') +
     ylab("Pearson's r") +
     labs(color = 'Fold #')+
@@ -307,7 +312,8 @@ res_spclust %>%
     # ggtitle("Spatial fold RMSE") +
     theme_bw()+
     theme(axis.text.x = element_text(angle = -70, size = 8, vjust = rotation_vjust(-70), hjust = rotation_hjust(70)),
-          plot.title = element_text(size = 10)) + 
+          plot.title = element_text(size = 10),
+          axis.title = element_text(size = 8)) + 
     xlab('') +
     ylab("RMSE") +
     labs(color = 'Fold #')+
@@ -321,7 +327,8 @@ res_spclust %>%
     # ggtitle("Random fold Pearson's r") +
     theme_bw()+
     theme(axis.text.x = element_text(angle = -70, size = 8, vjust = rotation_vjust(-70), hjust = rotation_hjust(70)),
-          plot.title = element_text(size = 10)) + 
+          plot.title = element_text(size = 10),
+          axis.title = element_text(size = 8)) + 
     labs(color = 'Fold #')+
     xlab('') +
     ylab("Pearson's r") +
@@ -335,7 +342,8 @@ res_spclust %>%
     # ggtitle("Random fold RMSE") +
     theme_bw()+
     theme(axis.text.x = element_text(angle = -70, size = 8, vjust = rotation_vjust(-70), hjust = rotation_hjust(70)),
-          plot.title = element_text(size = 10)) + 
+          plot.title = element_text(size = 10),
+          axis.title = element_text(size = 8)) + 
     labs(color = 'Fold #')+
     xlab('') +
     ylab("RMSE") +
@@ -348,7 +356,7 @@ finalMat_nontransform = read.csv('Env_data/GEA-climate-nontransformed.csv') %>% 
 spatial_combined_coords = merge(spatial_combined[c('fold', 'SampleID')], finalMat_nontransform, by.x = 'SampleID', by.y = 'Unique.ID')
 spatial_combined_coords$fold = factor(spatial_combined_coords$fold, levels = c('1', '2', '3', '4', '5', '6', '7', '8', '9', '10'))
 (spatialsample_plot = ggplot(spatial_combined_coords, aes(x = LongNew, y = LatNew, color = fold)) +
-    geom_text(aes(label = fold)) +
+    geom_text(aes(label = fold), size = 2) +
     theme_bw() +
     guides(color = 'none') +
     # labs(color = 'Fold #')+
@@ -357,17 +365,34 @@ spatial_combined_coords$fold = factor(spatial_combined_coords$fold, levels = c('
 )
 
 ## manuscript Figure 2
-(prediction_of_environment = ggarrange(
-  ggarrange(r_boxplot, rmse_boxplot, ncol = 2, labels = c('A', 'B'), common.legend = T, legend = 'bottom'), 
-  ggarrange(spatialsample_plot,
-            ggarrange(spatial_R + theme(axis.text.x = element_blank()), 
-                      random_R + theme(axis.text.x = element_blank()), 
-                      spatial_RMSE, 
-                      random_RMSE, ncol = 2, nrow = 2, labels = c('D', 'E', 'F', 'G'), common.legend = TRUE, legend = 'right'), labels = c('C'), ncol = 2, heights = c(2,3)),
-  nrow = 2))
-png(here(plot_dir, 'Manuscript', 'prediction-of-environment.png'), width = 700, height = 700)
-print(prediction_of_environment)
-dev.off()    
+(prediction_of_environment = ggarrange(r_boxplot, rmse_boxplot, ncol = 2, 
+                                       labels = c('A', 'B'), common.legend = T, legend = 'bottom'))
+(spatial_sampling = ggarrange(spatialsample_plot,
+                              ggarrange(spatial_R + theme(axis.text.x = element_blank()), 
+                                        random_R + theme(axis.text.x = element_blank()), 
+                                        spatial_RMSE, 
+                                        random_RMSE, ncol = 2, nrow = 2, labels = c('B', 'C', 'D', 'E'), 
+                                        common.legend = TRUE, legend = 'right', heights = c(2, 3)), 
+                              labels = c('A'), ncol = 2, widths = c(2, 3)))
+  
+
+ggsave('prediction-of-environment.pdf',
+       plot = prediction_of_environment,
+       device = 'pdf',
+       here(plot_dir, 'Manuscript'),
+       width = 160,
+       height = 80,
+       units = 'mm'
+)
+
+ggsave('spatial-sampling.pdf',
+       plot = spatial_sampling,
+       device = 'pdf',
+       here(plot_dir, 'Manuscript'),
+       width = 160,
+       height = 80,
+       units = 'mm'
+)
 
 
 spatial_melt_values = spatial_combined_coords %>% pivot_longer(cols = c('tmin', 'tmax', 'trange', 'precipTot', 'aridityMean', 'rhMean', 'elevation'), 
