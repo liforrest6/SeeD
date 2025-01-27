@@ -291,6 +291,16 @@ pdf(here(plot_dir, 'Manuscript', 'gea_qqplot.pdf'), width = 5, height = 5)
 (qqman::qq(gea_results %>% filter(maf > 0.05) %>% pull(P), main = 'qqplot, maf > 0.05'))
 dev.off()
 
+manual_manhattan(unstructured %>% filter(P > 0),
+                 highlight_SNP_list = c(), title = 'unstructured envGWAS')
+
+manual_manhattan(gea_results,
+                 highlight_SNP_list = c(), title = 'structured envGWAS')
+manual_manhattan(parallel,
+                 highlight_SNP_list = c(), title = 'parallel envGWAS')
+
+
+qqman::manhattan(unstructured)
 
 
 ####################################################################################

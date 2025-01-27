@@ -15,3 +15,6 @@ clumped_analysis = load_clumped()
 top_hits_clumped = load_clumped()$SNP
 
 
+unstructured = read_GEA_results(here(analyses_dir, 'GEA_output', 'multivariate_results_unstructured'), 'envGWAS_results')
+
+parallel = read_GEA_results(here(analyses_dir, 'GEA_output', 'multivariate_results_parallel'), 'envGWAS_results')
