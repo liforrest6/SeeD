@@ -20,13 +20,16 @@ print(c(rep,dataset,traitN))
 # }
 if(dataset == 1) {
   data = fread('../../Phenotype_data/blups_deregressed.csv',data.table = F)
-} else {
+} else if(dataset == 2) {
   data = fread('../../Phenotype_data/blups_deregressed_CV.csv',data.table = F)
+} else if(dataset == 3) {
+  data = fread('../../Phenotype_data/blups_std.csv',data.table = F)
 }
 
 data = subset(data,Trial_Classification != 'Stress')
 
-trait = unique(data$Trait)[traitN]
+trait = c("ASI","DaysToFlowering","FieldWeight","GrainWeightPerHectareCorrected","GrainWeightPerHectare","BareCobWeight","PlantHeight")[traitN]
+
 results_folder = sprintf('%s/dataset_%02d_%s/rep_%02d',trait,dataset,ifelse(transform==1,'orig','INT'),rep)
 try(dir.create(results_folder,recursive=T))
 
@@ -40,9 +43,6 @@ data_wide$SampleID = sample_to_geneticData$V1[match(data_wide$SampleID,sample_to
 
 Y = as.matrix(data_wide[,-c(1:2)])
 Y = Y[,apply(Y,2,sd,na.rm=T)>1e-4]
-if(dataset == 3) {
-  Y = scale(Y)
-}
 if(transform == 2) {
   Y = apply(Y,2,function(x) {
     qnorm((rank(x,na.last="keep")-0.5)/sum(!is.na(x)),mean(x,na.rm=T),sd(x,na.rm=T))
@@ -74,6 +74,11 @@ K = fread('../../Genetic_data/Imputed_V4/K_allChr.csv',data.table=F)
 rownames(K) = K[,1]
 K = as.matrix(K[,-1])
 K = K[data_wide$SampleID,data_wide$SampleID]
+
+# make K for FOAM
+diag(K) = 1
+K = K/4
+
 #
 # Y = Y[1:1000,]
 # data_wide = data_wide[1:1000,]

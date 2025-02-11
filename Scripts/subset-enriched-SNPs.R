@@ -8,7 +8,18 @@ dir = '/group/runciegrp2/Projects/SeeD/'
 genotype_dir = paste0(dir, 'Genetic_data/Imputed_V4/genotypes_by_chromosome/')
 
 data = as.data.frame(fread(file.path(dir, 'Env_data/GEA-climate-invnormtransformed.csv'),data.table = F))
-SNP_list = as.data.frame(fread(file.path(dir, 'Analyses/GEA_output/multivariate_results/clumped/GEA_clumped_SNPs_list.csv'), header = F))$V1
+## for structured GEA
+# SNP_list = as.data.frame(fread(file.path(dir, 'Analyses/GEA_output/multivariate_results/clumped/GEA_clumped_SNPs_list.csv'), header = F))$V1
+## for unstructured GEA
+
+clumped = fread(file.path(dir, 'Analyses/GEA_output/multivariate_results_unstructured/clumped/envGWAS_results.genomeclumped_1e-250.csv'))$SNP
+write.table(as.data.frame(clumped), 
+  '/group/runciegrp2/Projects/SeeD//Analyses/GEA_output/multivariate_results_unstructured/clumped/GEA_clumped_SNPs_list.csv',
+  quote = F, col.names = F, row.names = F)
+
+SNP_list = as.data.frame(fread(file.path(dir, 'Analyses/GEA_output/multivariate_results_unstructured/clumped/GEA_clumped_SNPs_list.csv'), header = F))$V1
+
+
 SampleIDs = data[, 1]
 non_dup_acc = read.csv('/group/runciegrp2/Projects/SeeD/Genetic_data/Imputed_V4/selected_genotypeIDs.csv')
 
@@ -24,4 +35,7 @@ for(chr in 1:10){
 }
 
 row.names(final_genotype) = SampleIDs
-write.csv(final_genotype, file.path(genotype_dir, 'GEA_clumped_SNPs_genotype.csv'))
+
+## switch off for structured vs unstructed envGWAS
+# write.csv(final_genotype, file.path(genotype_dir, 'GEA_clumped_SNPs_genotype.csv'))
+write.csv(final_genotype, file.path(genotype_dir, 'GEA_unstructured_clumped_SNPs_genotype.csv'))

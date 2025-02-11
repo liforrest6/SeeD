@@ -64,11 +64,17 @@ map = map[match(colnames(mat),map$V4),]
 setwd(results_folder)
 
 
-K_file = sprintf('%s/cholL_Sigma_inv/cholL_Sigma_inv_chr%02d.txt',results_folder,chr)
+# K_file = sprintf('%s/cholL_Sigma_inv/cholL_Sigma_inv_chr%02d.txt',results_folder,chr)
 K = fread(sprintf('%s/K_chr_%02d.csv',LOO_K_dir,chr),data.table=F)
 rownames(K) = K[,1]
 K = as.matrix(K[,-1])
 K = K[SampleIDs,SampleIDs]
+
+# make K for FOAM
+diag(K) = 1
+K = K/4
+
+
 
 MAF = beta_hat = SE = p_wald = matrix(NA,nrow = nrow(map),ncol = ncol(Y),dimnames = list(map$V4,colnames(Y)))
 
@@ -79,6 +85,7 @@ for(experimento in colnames(Y)) {
   X = mat[i,]
   y = y[i]
   Ki = K[i,i]
+  Xt = model.matrix(~Tester,data_wide[i,])
 
   maf = .5 - abs(.5-colMeans(X)/2)
   select_cols = maf > 0.01
@@ -92,12 +99,13 @@ for(experimento in colnames(Y)) {
 
   fwrite(geno,file = sprintf('%s_geno.bimbam',tmp_file),row.names=F,col.names = F,sep=',')
   write.table(y,file = sprintf('%s_pheno.txt',tmp_file),sep='\t',row.names=F,col.names=F)
+  write.table(Xt,file = sprintf('%s_cov.txt',tmp_file),row.names=F,col.names = F,sep=',')
   write.table(Ki,file = sprintf('%s_K.txt',tmp_file),row.names=F,col.names=F)
 
   outfile = sprintf('gemma_output_%s_chr%02d.txt',experimento,chr)
 
-  system(sprintf('%s -g %s -p %s -k %s -lmm 4 -o %s',
-                 gemma,sprintf('%s_geno.bimbam',tmp_file),sprintf('%s_pheno.txt',tmp_file),sprintf('%s_K.txt',tmp_file),
+  system(sprintf('%s -g %s -p %s -k %s  -c %s -lmm 4 -o %s',
+                 gemma,sprintf('%s_geno.bimbam',tmp_file),sprintf('%s_pheno.txt',tmp_file),sprintf('%s_K.txt',tmp_file),sprintf('%s_cov.txt',tmp_file),
                  outfile))
   system(sprintf('rm -rf %s*',tmp_file))
   results = fread(sprintf('output/%s.assoc.txt',outfile),data.table=F)

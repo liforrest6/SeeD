@@ -20,8 +20,14 @@ dir='/group/runciegrp2/Projects/SeeD/'
 ## subset for enriched SNPs
 # Rscript ${dir}/Scripts/subset-SNPs.R /Analyses/GEA_output/multivariate_results/clumped/GEA_clumped_SNPs_list.csv GEA_clumped_SNPs_genotype.csv
 ## subset for matching SNPs
-# Rscript ${dir}/Scripts/subset-SNPs.R /Analyses/GEA_output/multivariate_results/clumped/gea_matching_sampled_SNPs.txt GEA_matching_SNPs_genotype.csv
+# Rscript ${dir}/Scripts/subset-SNPs.R /Analyses/GEA_output/multivariate_results/clumped/GEA_matching_sampled_SNPs.txt GEA_matching_SNPs_genotype.csv
+
+
+## subset for enriched SNPs
+# Rscript ${dir}/Scripts/subset-SNPs.R /Analyses/GEA_output/multivariate_results_unstructured/clumped/GEA_clumped_SNPs_list.csv GEA_unstructured_clumped_SNPs_genotype.csv
+## subset for matching SNPs
+Rscript ${dir}/Scripts/subset-SNPs.R /Analyses/GEA_output/multivariate_results_unstructured/clumped/unstructured_gea_matching_sampled_SNPs.txt GEA_unstructured_matching_SNPs_genotype.csv
 
 ## generate random sample of high coverage SNPs for PCA analysis
-Rscript ${dir}/Scripts/sample-SNPs.R
+# Rscript ${dir}/Scripts/sample-SNPs.R
 

@@ -5,8 +5,10 @@ import os
 
 print('Start clumping alleles genome-wide')
 
+
+
 # read multivariate eGWAS results and concatenate all together
-resultsFilePath = '/group/runciegrp2/Projects/SeeD/Analyses/GEA_output/multivariate_results/'
+resultsFilePath = '/group/runciegrp2/Projects/SeeD/Analyses/GEA_output/multivariate_results_unstructured'
 all_files = glob.glob(os.path.join(resultsFilePath, "envGWAS_results*"))
 resultsFile = pd.concat((pd.read_csv(f) for f in all_files), ignore_index = True)
 
@@ -23,7 +25,7 @@ resultsFile = pd.concat((pd.read_csv(f) for f in all_files), ignore_index = True
 # chrom = 4
 r2 = 0.3
 bp = 15000000 # only used for window-based clumping, not used in this script
-pval = 1e-5 
+pval = 1e-250
 # only look at SNPs below certain p-value threshold
 p1_SNPs = resultsFile[resultsFile['X..Pvalue'] < pval]
 # p1_SNPs = p1_SNPs[p1_SNPs['snp'].isin(maf_filter['snp'])]
@@ -42,18 +44,18 @@ for chrom in range(1, 11):
     genotypeFile = pd.concat([genotypeFile, chr_genotypeFile], axis = 1)
     print('Concatenated genotypeFile chromosome %d' % chrom)
 
-genotypeFile.to_csv('/group/runciegrp2/Projects/SeeD/Analyses/GEA_output/multivariate_results/clumped/significant-SNPs.012.csv', index = False)
-print('Printed genotypeFile')
+genotypeFile.to_csv('%s/clumped/significant-SNPs.012.csv' % resultsFilePath, index = False)
+print('Printed genotypeFile', flush = True)
 
-# genotypeFile = pd.read_csv('/group/runciegrp2/Projects/SeeD/Analyses/GEA_output/multivariate_results/clumped/significant-SNPs.012.csv')
+# genotypeFile = pd.read_csv('%s/clumped/significant-SNPs.012.csv' % resultsFilePath)
 
 
 freqcorr = np.square(genotypeFile.corr())
-print('Calculated correlation matrix')
-freqcorr.to_csv('/group/runciegrp2/Projects/SeeD/Analyses/GEA_output/multivariate_results/clumped/corr_matrix.csv', index = True)
-print('Printed correlation matrix')
+print('Calculated correlation matrix', flush = True)
+freqcorr.to_csv('%s/clumped/corr_matrix.csv' % resultsFilePath, index = True)
+print('Printed correlation matrix', flush = True)
 
-# freqcorr = pd.read_csv('/group/runciegrp2/Projects/SeeD/Analyses/GEA_output/multivariate_results/clumped/corr_matrix.csv')
+# freqcorr = pd.read_csv('%s/clumped/corr_matrix.csv' % resultsFilePath)
 
 freqcorrmelt = pd.melt(freqcorr.reset_index(), 
         id_vars = 'index', 
@@ -61,7 +63,7 @@ freqcorrmelt = pd.melt(freqcorr.reset_index(),
         var_name = 'B',
         value_name = 'R2')
 freqcorrmelt['R2'] = pd.to_numeric(freqcorrmelt['R2'])
-print('Melted correlation matrix')
+print('Melted correlation matrix', flush = True)
 
 
 
@@ -93,8 +95,8 @@ while not p1_SNPs.empty:
     p1_SNPs.drop(p1_SNPs[p1_SNPs['snp'].isin(list(clumped_snps['B']))].index, inplace = True)
     # p1_SNPs = p1_SNPs.iloc[1:,:]
 
-p1_df.to_csv('/group/runciegrp2/Projects/SeeD/Analyses/GEA_output/multivariate_results/clumped/envGWAS_results.genomeclumped_%s.csv' % str(pval))
-print('Finished clumping')
+p1_df.to_csv('%s/clumped/envGWAS_results.genomeclumped_%s.csv' % (resultsFilePath, str(pval)))
+print('Finished clumping', flush = True)
 
 
 

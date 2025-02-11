@@ -5,7 +5,7 @@
 #SBATCH -e /home/fli21/slurm-log/envGWAS-multivariate-%j.txt
 #SBATCH -J envGWAS
 #SBATCH -t 24:00:00
-#SBATCH --mem 10GB
+#SBATCH --mem 40GB
 #SBATCH -n 16
 #SBATCH --array=1-10
 #SBATCH --account=jrigrp

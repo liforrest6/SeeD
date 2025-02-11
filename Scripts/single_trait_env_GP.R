@@ -24,7 +24,7 @@ K = as.matrix(K[,-1])
 sample_to_geneticData = fread('../../Genetic_data/Imputed_V4/selected_genotypeIDs.csv',data.table=F)
 
 data = fread('../../Phenotype_data/blups_std.csv',data.table = F)
-trait = c("ASI","DaysToFlowering","FieldWeight","GrainWeightPerHectareCorrected","GrainWeightPerHectare","BareCobWeight","PlantHeight")[traitN]
+trait = c("ASI","DaysToFlowering","FieldWeight", "BareCobWeight","PlantHeight", "GrainWeightPerHectareCorrected","GrainWeightPerHectare")[traitN]
 data$DNAID = sample_to_geneticData$V1[match(data$SampleID,sample_to_geneticData$Sample)]
 
 data = subset(data,Trait == trait & !is.na(DNAID))

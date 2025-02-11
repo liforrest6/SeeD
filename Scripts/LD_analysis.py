@@ -6,11 +6,11 @@ import os
 print('Start clumping alleles genome-wide')
 
 # read multivariate eGWAS results and concatenate all together
-resultsFilePath = '/group/runciegrp2/Projects/SeeD/Analyses/GEA_output/multivariate_results/'
+resultsFilePath = '/group/runciegrp2/Projects/SeeD/Analyses/GEA_output/multivariate_results_unstructured'
 all_files = glob.glob(os.path.join(resultsFilePath, "envGWAS_results*"))
 resultsFile = pd.concat((pd.read_csv(f) for f in all_files), ignore_index = True)
-top_hits_coord = pd.read_csv('/group/runciegrp2/Projects/SeeD/Analyses/GEA_output/multivariate_results/clumped/GEA_lead_SNPs_list_with_coord.csv')
-sig_hits_coord = pd.read_csv('/group/runciegrp2/Projects/SeeD/Analyses/GEA_output/multivariate_results/clumped/GEA_significant_SNPs_list_with_coord.csv')
+top_hits_coord = pd.read_csv('%s/clumped/GEA_lead_SNPs_list_with_coord.csv' % resultsFilePath)
+sig_hits_coord = pd.read_csv('%s/clumped/GEA_significant_SNPs_list_with_coord.csv' % resultsFilePath)
 
 ## do not filter SNPs for new envGWAS with 7 climate variables
 ## import maf-filtered SNPS (maf > 0.05) generated from util_functions::read_MAF_file()
@@ -99,12 +99,12 @@ for chrom in range(9, 10):
     print('Loaded genotypeFile chromosome %d' % chrom)
     # genotypeFile = pd.concat([genotypeFile, chr_genotypeFile], axis = 1)
     # print('Concatenated genotypeFile chromosome %d' % chrom)
-    chr_genotypeFile.to_csv('/group/runciegrp2/Projects/SeeD/Analyses/GEA_output/multivariate_results/clumped/LD_analysis/LD_SNPs_within_significant_windows_hsftf9.012.csv', index = False)
+    chr_genotypeFile.to_csv('%s/clumped/LD_analysis/LD_SNPs_within_significant_windows_hsftf9.012.csv' % resultsFilePath, index = False)
     print('Printed genotypeFile')
 
     freqcorr = np.square(chr_genotypeFile.corr())
     print('Calculated correlation matrix for hsftf9')
-    freqcorr.to_csv('/group/runciegrp2/Projects/SeeD/Analyses/GEA_output/multivariate_results/clumped/LD_analysis/LD_local_corr_matrix_hsftf9.csv', index = True)
+    freqcorr.to_csv('%s/clumped/LD_analysis/LD_local_corr_matrix_hsftf9.csv' % resultsFilePath, index = True)
     print('Printed correlation matrix for hsftf9')
 
 
