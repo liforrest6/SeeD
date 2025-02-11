@@ -153,7 +153,7 @@ write.csv(trials_per_tester, here(analyses_dir, 'Tables', 'trials_per_tester.csv
 ## Just print out samples of matched SNPs and be done with this farce
 ####################################################################################
 gea_matching_samples = as.data.frame(replicate(20, compare_GWAS_effects(gea_results, top_hits_clumped, gea = T) %>% filter(matching == T) %>% pull(SNP)))
-write.table(gea_matching_samples, here(genetic_data_dir, 'gea_matching_sampled_SNPs.txt'), col.names = F, row.names = F)
+write.table(gea_matching_samples, here(genetic_data_dir, 'GEA_matching_sampled_SNPs.txt'), col.names = F, row.names = F)
 
 ## print out GEA SNPs under 1e-2 p-value for plink clumping and LD analysis
 SNP_LD = gea_results %>% filter(P < 1e-2) %>% select(SNP)
@@ -162,6 +162,13 @@ write.csv(SNP_LD, 'Analyses/GEA_output/multivariate_results/GEA_SNP_1e2_forplink
 plink_analysis = fread('Analyses/GEA_output/multivariate_results/clumped/plink/LD-analysis.ld')
 
 manual_manhattan(gea_results, plink_analysis$SNP_B)
+
+
+unstructured_SNP_list = as.data.frame(fread('Analyses/GEA_output/multivariate_results_unstructured/clumped/envGWAS_results.genomeclumped_1e-250.csv'), header = F)$SNP
+unstructured_envGWAS_samples = as.data.frame(replicate(1, compare_GWAS_effects(gea_results, unstructured_SNP_list, gea = T) %>% filter(matching == T) %>% pull(SNP)))
+write.table(unstructured_envGWAS_samples, here(genetic_data_dir, 'unstructured_gea_matching_sampled_SNPs.txt'), col.names = F, row.names = F)
+
+
 
 ####################################################################################
 var_lookup = c(tmin = 'tmin..X', tmax = 'tmax..X', trange = 'trange..X', precipTot = 'precipTot..X', 

@@ -64,9 +64,8 @@ ggplot(observed_comparison, aes(climate_values.x, climate_values.y, color = fact
         axis.title = element_text(size = 20)) 
 )
 
-###################################################################################################
-## perform for k-fold testing
-###################################################################################################
+##### perform for random k-fold testing################################################################################
+
 environmental_prediction_results = list()
 for(i in 1:5) {
   U_hat = read.csv(here::here(analyses_dir, 'MegaLMM_output', 'dataset_clim-prediction-rep_05', sprintf('U_hat-rep_05-fold_%02d.csv', i)), row.names = 1)
@@ -136,9 +135,8 @@ observed_comparison = merge(combined %>%
 )
 
 
-###################################################################################################
-## perform for spatial fold testing
-###################################################################################################
+##### perform for spatial fold testing  ###################################################################
+
 ## read all spatial folds
 spatial_results = list()
 rep = 2
@@ -215,9 +213,9 @@ all_combined = bind_rows(spatial_combined %>%
 
 
 
-###################################################################################################
-## calculate means for each trait and fold_type, check if there is sig difference in means between fold types
-###################################################################################################
+##### calculate means for each trait and fold_type ############################################################################
+## check if there is sig difference in means between fold types
+
 ## generate dataframe looking at aggregate accuracies
 res_spclust = foreach(trait=variables, .combine = rbind) %:% 
   foreach(i_fold_type = c('spatial', 'random'), .combine = rbind) %:%
@@ -238,6 +236,9 @@ res_spclust %>%
   group_by(trait, fold_type) %>% 
   summarise(mean_r = mean(r), min_r = min(r), max_r = max(r),
             mean_rmse = mean(rmse))
+
+##### make plots for GPoE analyses #####################################################################
+
 
 ## boxplots for correlation and RMSE predictive accuracy for both spatial and random sampling
 (r_boxplot = ggplot(res_spclust,aes(x=trait,y=r, color = fold_type)) + 
@@ -376,9 +377,9 @@ spatial_combined_coords$fold = factor(spatial_combined_coords$fold, levels = c('
                               labels = c('A'), ncol = 2, widths = c(2, 3)))
   
 
-ggsave('prediction-of-environment.pdf',
+ggsave('prediction-of-environment.tif',
        plot = prediction_of_environment,
-       device = 'pdf',
+       device = 'tiff',
        here(plot_dir, 'Manuscript'),
        width = 160,
        height = 80,
@@ -406,9 +407,8 @@ ggplot(spatial_melt_values, aes(y = env_trait_value, x = fold)) +
 # png(here(plot_dir, 'Manuscript', 'validation_buffer.png'), width = 400, height = 700)
 # print(validation_fold_plot)
 # dev.off()    
-##########################################################################
-# plot RMSE of certain folds
-##########################################################################
+##### test plot RMSE of certain folds ########################
+
 
 spatial_coords = spatial_combined[c('SampleID', 'fold')]
 

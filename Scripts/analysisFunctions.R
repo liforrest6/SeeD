@@ -7,21 +7,7 @@
 
 # source(here::here('config.R'))
 
-### compiles files of SNP allele frequencies across all chromosomes
-### RETURNS file of all SNPs > 0.05 maf for keeping in GWAS results
-# read_MAF_file = function() {
-#   listSNPs = list()
-#   for(i in 1:10){
-#     mafs = read.csv(sprintf(file.path(homeDirectory, '/data/snp_freqs/chr%02d_maf.csv'), i) , header = T)
-#     listSNPs[[i]] = mafs
-#   }
-#   mafDF = bind_rows(listSNPs)
-#   ## choose threshold of maf above 0.05 to prevent inflation
-#   mafDF = mafDF %>% filter(x > 0.05)
-#   return(mafDF)
-# }
-
-### reads Panzea file of maize v2 to v4 mapping
+### reads Panzea file of maize v2 to v4 mapping - deprecated since re-mapping to V4 directly
 ### RETURNS v4_coords
 # read_v4_coords_file = function() {
 #   v4_coords = read.delim(file.path(homeDirectory, '/data/gbs2.7_agpv4.bed'), header = F)
@@ -55,6 +41,7 @@ read_GWAS_results_std = function(directory, pattern) {
   return(GWAS_results)
 }
 
+
 ### reads JOINT GWAS p-value results for deregressed blups
 read_GWAS_results = function(directory, pattern) {
   GWAS_results = bind_rows(lapply(list.files(directory, pattern = pattern, full.names = T), 
@@ -65,7 +52,6 @@ read_GWAS_results = function(directory, pattern) {
   return(GWAS_results)
 }
 
-
 ### reads all GEA GWAS effect size results (beta hats) from transformed climate variable data
 ### RETURNS cumulative results from all chromosomes
 read_GWAS_effects = function(directory, pattern) {
@@ -75,12 +61,80 @@ read_GWAS_effects = function(directory, pattern) {
   return(beta_hats)
 }
 
+## read SE from GWAS files
 read_GWAS_SEs = function(directory, pattern) {
   SEs = data.frame(data.table::rbindlist(lapply(list.files(directory, pattern = pattern, full.names = T), 
                          fread), use.names = T))
   return(SEs)
 }
 
+## original calculateVariableSignificance function without Fisher's P value
+calculateVariableSignificance = function(phenotype, phenotype_name){
+  set.seed(42)
+  number_bootstraps = 1000
+  phenotype_two_fx = merge_JGWAS_GEA(phenotype, gea_beta_hats)
+  SNP_matrix = sampleSNPs(phenotype_two_fx, top_hits_clumped, number_bootstraps, gea = T)
+  # pcollection = data.frame(matrix(ncol = 3, nrow = 0))
+  # colnames(pcollection) = c('name', 'is_top_hit', 'p-value')
+  pcollection = data.frame('name' = 'gea_hits',
+                           'is_top_hit' = T,
+                           'matching' = F,
+                           'logP' = phenotype_two_fx %>% 
+                             filter(SNP %in% top_hits_clumped) %>% 
+                             pull(logP) %>% 
+                             mean(., na.rm = T))
+  for(j in 1:number_bootstraps){
+    pvalue = mean(phenotype_two_fx[which(SNP_matrix[[sprintf('bootstrap%d',j)]] == T),]$logP)
+    pcollection = rbind(pcollection, c(sprintf('bootstrap%d',j), F, T, pvalue))
+  }
+  
+  pcollection$is_top_hit = as.logical(pcollection$is_top_hit)
+  pcollection$matching = as.logical(pcollection$matching)
+  pcollection$logP = as.numeric(pcollection$logP)
+  # x = plotpValueSDFigure(pcollection, phenotype_name)
+  return(pcollection)
+}
+
+## combine joint GWAS results to effect sizes, get -log10 on p-values - do this for fisher p-values
+calculateVariableSignificanceFisher = function(phenotype, phenotype_name){
+  set.seed(42)
+  number_bootstraps = 1000
+  phenotype_two_fx = merge_JGWAS_GEA(phenotype, gea_beta_hats)
+  SNP_matrix = sampleSNPs(phenotype_two_fx, top_hits_clumped, number_bootstraps, gea = T)
+  # pcollection = data.frame(matrix(ncol = 3, nrow = 0))
+  # colnames(pcollection) = c('name', 'is_top_hit', 'p-value')
+  pcollection = data.frame('name' = 'gea_hits',
+                           'is_top_hit' = T,
+                           'matching' = F,
+                           'fisherP' = phenotype_two_fx %>% 
+                             filter(SNP %in% top_hits_clumped) %>% 
+                             pull(fisherP) %>% 
+                             mean(., na.rm = T))
+  
+  sampled_pcollection = data.frame(do.call(rbind, lapply(c(1:number_bootstraps), function(j){
+    pvalue = mean(phenotype_two_fx[which(SNP_matrix[[sprintf('bootstrap%d',j)]] == T),]$fisherP, na.rm = T)
+    this_pcollection = c(sprintf('bootstrap%d',j), F, T, pvalue)
+    this_pcollection
+  })))
+  colnames(sampled_pcollection) = c('name', 'is_top_hit', 'matching', 'fisherP')
+  pcollection = rbind(pcollection, data.frame(sampled_pcollection))
+  
+  
+  # for(j in 1:number_bootstraps){
+  #   pvalue = mean(phenotype_two_fx[which(SNP_matrix[[sprintf('bootstrap%d',j)]] == T),]$fisherP)
+  #   pcollection = rbind(pcollection, c(sprintf('bootstrap%d',j), F, T, pvalue))
+  # }
+  
+  pcollection$is_top_hit = as.logical(pcollection$is_top_hit)
+  pcollection$matching = as.logical(pcollection$matching)
+  pcollection$fisherP = as.numeric(pcollection$fisherP)
+  pcollection$logP = -log10(pcollection$fisherP)
+  # x = plotpValueSDFigure(pcollection, phenotype_name)
+  return(pcollection)
+}
+
+
+## read results from GEMMA univariate GWAS
 read_GEMMA_results = function(directory, traitN, pattern) {
   gemma_directory = file.path(directory, traitN, 'rep_01')
   gemma_results = data.frame(data.table::rbindlist(lapply(list.files(gemma_directory, pattern = pattern, full.names = T), 
@@ -92,25 +146,6 @@ read_GEMMA_results = function(directory, traitN, pattern) {
   gemma_results$BP = as.numeric(gemma_results$BP)
   return(gemma_results)
 }
-
-# ### reads all GEA GWAS p-value results from transformed climate variable data
-# ### RETURNS cumulative results from all chromosomes
-# read_GEA_results = function() {
-#   clim_results = bind_rows(lapply(list.files(file.path(homeDirectory, '/output/clim_log_results'), pattern = 'eGWAS_results', full.names = T), 
-#                                   read.csv))
-#   clim_results = clim_results[, c(4, 1, 2, 5, 10)]
-#   colnames(clim_results) = c('SNP', 'CHR', 'BP', 'maf', 'P')
-#   return(clim_results)
-# }
-# 
-# ### reads all GEA GWAS effect size results (beta hats) from transformed climate variable data
-# ### RETURNS cumulative results from all chromosomes
-# read_GEA_effects = function() {
-#   beta_hats = bind_rows(lapply(list.files(file.path(homeDirectory, '/output/clim_log_results'), pattern = 'eGWAS_beta_hats', full.names = T), 
-#                                read.csv))
-#   # beta_hats = cbind(clim_results, beta_hats)
-#   return(beta_hats)
-# }
 
 ### filters results from a GWAS results dataset based on list of SNPs (intended to be for maf filter)
 ### RETURNS filtered dataset
@@ -192,6 +227,45 @@ merge_JGWAS_GEA = function(jgwas, gea) {
                     jgwas %>% dplyr::select(c(starts_with('Experiment'), 'SNP', 'maf', 'P', 'logP')),
                     by = 'SNP', suffixes = c('.gea', '.jgwas'))
   return(result_df)
+}
+
+sampleSNPs = function(df, top_hits, number_bootstraps, gea = F) {
+  ### function that takes a Joint result from processJointresults and the top hits from envGWAS
+  ### and adds columns that identify top SNP hits as well as samples SNPs with matching maf
+  # create factor column from maf using cut (20 intervals in format [0, 0.025))
+  if(gea == F) {
+    df$maf_factor = cut(df$maf, breaks = seq(0, 0.50001, 0.025), include.lowest = T, right = F)
+  } else if(gea == T) {
+    df$maf_factor = cut(df$maf.gea, breaks = seq(0, 0.50001, 0.025), include.lowest = T, right = F)
+  }
+  df$is_top_hit = df$SNP %in% top_hits
+  
+  runs = data.frame(SNP = df$SNP)
+  
+  nested_df = df %>% 
+    # nest by maf interval factor
+    group_by(maf_factor) %>% 
+    nest() %>% 
+    ungroup() %>%
+    # create new column of just top hits
+    mutate(top_hits = map(data, ~filter(., is_top_hit))) %>% 
+    # calculate frequency of top hits
+    mutate(count = map_dbl(top_hits, nrow)) %>% 
+    # mutate(freq = round(count / sum(count), 3)) %>% 
+    # calculate new column of no top hits
+    mutate(non_top_hits = map(data, ~filter(., !is_top_hit)))
+  
+  for(i in 1:number_bootstraps){
+    bootstrap_SNPs = nested_df %>% 
+      # create new column by sampling non-top-hits using frequency of top hits
+      mutate(samp = map2(non_top_hits, count, sample_n)) %>% 
+      dplyr::select(samp) %>% 
+      unnest(samp) %>% 
+      pull(SNP)
+    runs[[sprintf('bootstrap%d', i)]] = F
+    runs[[sprintf('bootstrap%d', i)]][which(runs$SNP %in% bootstrap_SNPs)] = df[which(runs$SNP %in% bootstrap_SNPs), 'maf_factor']
+  }
+  return(runs)
 }
 
 ## polarize JGWAS effect sizes at each trial by the GEA GWAS effect sign, for the passed climate variable.

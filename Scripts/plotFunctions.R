@@ -20,61 +20,101 @@ library(ggtext)
 library(lemon)
 library(tiff)
 
+
+
 ############################################################################
 ## for map plotting
 ############################################################################
+trial_info = read.csv('Phenotype_data/Trial_info.csv')
+trial_worldclim = read.csv('Phenotype_data/Trial_worldclim.csv')
+trial_master = merge(trial_worldclim, trial_info, by = 'Experimento')
 
+## function that plots manhattan plot
+## highlight_SNP_list: pass a list of SNPs to highlight,
+## chr_filter: specific chromosomes to plot
+## sig: choose threshold for significance line 
+## chr_col, bp_col, p_col: column names corresponding to chromosome, BP, and P-value
+manual_manhattan = function(results, highlight_SNP_list, chr_filter = NA, sig = 1e-5,
+                            chr_col = 'CHR', bp_col = 'BP', p_col = 'P', 
+                            title = 'Multivariate GEA'){
+  if(!is.na(chr_filter)) {
+    results = results %>% filter((!!sym(chr_col)) == chr_filter)
+  }
+  
+  max_BP <- results |>
+    group_by((!!sym(chr_col))) |>
+    summarise(max_bp = max((!!sym(bp_col)))) |>
+    mutate(bp_add = lag(cumsum(max_bp), default = 0)) |>
+    dplyr::select((!!sym(chr_col)), bp_add)
+  
+  results_add <- results |>
+    inner_join(max_BP, by = chr_col) |>
+    mutate(bp_cum = (!!sym(bp_col)) + bp_add)
+  
+  axis_set <- results_add |>
+    group_by((!!sym(chr_col))) |>
+    summarize(center = mean(bp_cum))
+  
+  ylim <- results_add |>
+    filter((!!sym(p_col)) == min((!!sym(p_col)))) |>
+    mutate(ylim = abs(floor(log10((!!sym(p_col))))) + 2) |>
+    pull(ylim)
+  
+  # sig <- 1e-5
+  
+  (manhplot <- ggplot(results_add, aes(
+    x = bp_cum, y = -log10((!!sym(p_col))),
+    color = as.factor((!!sym(chr_col))), size = -log10((!!sym(p_col)))
+  )) +
+      geom_hline(
+        yintercept = -log10(sig), color = "blue",
+        linetype = "dashed"
+      ) +
+      geom_point(alpha = 0.75, size = 0.5) +
+      scale_x_continuous(
+        label = axis_set %>% pull((!!sym(chr_col))),
+        breaks = axis_set$center
+      ) +
+      scale_y_continuous(expand = c(0, 0), limits = c(0, ylim)) +
+      scale_color_manual(values = rep(
+        c("grey4", "grey30"),
+        unique(length(axis_set %>% pull(!!sym(chr_col))))
+      )) +
+      geom_point(data = results_add[results_add$SNP %in% highlight_SNP_list,],
+                 alpha = 0.75, size = 0.75, color = 'red') + 
+      scale_size_continuous(range = c(0.5, 3)) +
+      labs(
+        x = NULL,
+        y = "-log<sub>10</sub>(p)"
+      ) +
+      theme(
+        legend.position = "none",
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        axis.title.y = element_markdown(),
+        axis.text.x = element_text(angle = 0, size = 10, vjust = 0.5)
+      ) +
+      theme_bw() +
+      ggtitle(title)
+  )
+  
+}
 
-tmin_results = read_GEMMA_results(here(analyses_dir, 'GEA_output', 'GEMMA_univariate'), 'tmin', 'p_wald')
-inv4mCoords = c(1.71e+8, 1.86e8)
-hsftf9Coords = c(1.480e8 , 1.490e8)
-inv4mSNPs = tmin_results %>% filter(BP > inv4mCoords[1] & BP < inv4mCoords[2] & Chr == 4) %>% pull(V1)
-hsftf9SNPs = tmin_results %>% filter(BP > hsftf9Coords[1] & BP < hsftf9Coords[2] & Chr == 9) %>% pull(V1)
+### code to easily find SNP names within coordinate intervals for inv4m and hsftf9 for plotting 
+{
+  tmin_results = read_GEMMA_results(here(analyses_dir, 'GEA_output', 'GEMMA_univariate'), 'tmin', 'p_wald')
+  inv4mCoords = c(1.71e+8, 1.86e8)
+  hsftf9Coords = c(1.480e8 , 1.490e8)
+  inv4mSNPs = tmin_results %>% filter(BP > inv4mCoords[1] & BP < inv4mCoords[2] & Chr == 4) %>% pull(V1)
+  hsftf9SNPs = tmin_results %>% filter(BP > hsftf9Coords[1] & BP < hsftf9Coords[2] & Chr == 9) %>% pull(V1)
+}
 
+## returns min, mean, and limits of data for plotting
 min.mean.sd.max <- function(x) {
   mean_val = mean(x, na.rm = T)
   r <- c(min(x, na.rm = T), mean_val - sd(x, na.rm = T), mean_val, mean_val + sd(x, na.rm = T), max(x, na.rm = T))
   names(r) <- c("ymin", "lower", "middle", "upper", "ymax")
   r
-}
-
-sampleSNPs = function(df, top_hits, number_bootstraps, gea = F) {
-  ### function that takes a Joint result from processJointresults and the top hits from envGWAS
-  ### and adds columns that identify top SNP hits as well as samples SNPs with matching maf
-  # create factor column from maf using cut (20 intervals in format [0, 0.025))
-  if(gea == F) {
-    df$maf_factor = cut(df$maf, breaks = seq(0, 0.50001, 0.025), include.lowest = T, right = F)
-  } else if(gea == T) {
-    df$maf_factor = cut(df$maf.gea, breaks = seq(0, 0.50001, 0.025), include.lowest = T, right = F)
-  }
-  df$is_top_hit = df$SNP %in% top_hits
-  
-  runs = data.frame(SNP = df$SNP)
-  
-  nested_df = df %>% 
-    # nest by maf interval factor
-    group_by(maf_factor) %>% 
-    nest() %>% 
-    ungroup() %>%
-    # create new column of just top hits
-    mutate(top_hits = map(data, ~filter(., is_top_hit))) %>% 
-    # calculate frequency of top hits
-    mutate(count = map_dbl(top_hits, nrow)) %>% 
-    # mutate(freq = round(count / sum(count), 3)) %>% 
-    # calculate new column of no top hits
-    mutate(non_top_hits = map(data, ~filter(., !is_top_hit)))
-  
-  for(i in 1:number_bootstraps){
-    bootstrap_SNPs = nested_df %>% 
-      # create new column by sampling non-top-hits using frequency of top hits
-      mutate(samp = map2(non_top_hits, count, sample_n)) %>% 
-      dplyr::select(samp) %>% 
-      unnest(samp) %>% 
-      pull(SNP)
-    runs[[sprintf('bootstrap%d', i)]] = F
-    runs[[sprintf('bootstrap%d', i)]][which(runs$SNP %in% bootstrap_SNPs)] = T
-  }
-  return(runs)
 }
 
 lowerFn <- function(data, mapping, method = "lm", ...) {
@@ -145,73 +185,6 @@ plotpValueSDTalk = function(df, phenotype) {
     labs(x = '', y = '', color = '')
 }
 
-## combine joint GWAS results to effect sizes, get -log10 on p-values - do this for fisher p-values
-calculateVariableSignificanceFisher = function(phenotype, phenotype_name){
-  set.seed(42)
-  number_bootstraps = 1000
-  phenotype_two_fx = merge_JGWAS_GEA(phenotype, gea_beta_hats)
-  SNP_matrix = sampleSNPs(phenotype_two_fx, top_hits_clumped, number_bootstraps, gea = T)
-  # pcollection = data.frame(matrix(ncol = 3, nrow = 0))
-  # colnames(pcollection) = c('name', 'is_top_hit', 'p-value')
-  pcollection = data.frame('name' = 'gea_hits',
-                           'is_top_hit' = T,
-                           'matching' = F,
-                           'fisherP' = phenotype_two_fx %>% 
-                             filter(SNP %in% top_hits_clumped) %>% 
-                             pull(fisherP) %>% 
-                             mean(., na.rm = T))
-  
-  sampled_pcollection = data.frame(do.call(rbind, lapply(c(1:number_bootstraps), function(j){
-    pvalue = mean(phenotype_two_fx[which(SNP_matrix[[sprintf('bootstrap%d',j)]] == T),]$fisherP, na.rm = T)
-    this_pcollection = c(sprintf('bootstrap%d',j), F, T, pvalue)
-    this_pcollection
-  })))
-  colnames(sampled_pcollection) = c('name', 'is_top_hit', 'matching', 'fisherP')
-  pcollection = rbind(pcollection, data.frame(sampled_pcollection))
-  
-  
-  # for(j in 1:number_bootstraps){
-  #   pvalue = mean(phenotype_two_fx[which(SNP_matrix[[sprintf('bootstrap%d',j)]] == T),]$fisherP)
-  #   pcollection = rbind(pcollection, c(sprintf('bootstrap%d',j), F, T, pvalue))
-  # }
-  
-  pcollection$is_top_hit = as.logical(pcollection$is_top_hit)
-  pcollection$matching = as.logical(pcollection$matching)
-  pcollection$fisherP = as.numeric(pcollection$fisherP)
-  pcollection$logP = -log10(pcollection$fisherP)
-  # x = plotpValueSDFigure(pcollection, phenotype_name)
-  return(pcollection)
-}
-
-## original calculateVariableSignificance function without Fisher's P value
-calculateVariableSignificance = function(phenotype, phenotype_name){
-  set.seed(42)
-  number_bootstraps = 1000
-  phenotype_two_fx = merge_JGWAS_GEA(phenotype, gea_beta_hats)
-  SNP_matrix = sampleSNPs(phenotype_two_fx, top_hits_clumped, number_bootstraps, gea = T)
-  # pcollection = data.frame(matrix(ncol = 3, nrow = 0))
-  # colnames(pcollection) = c('name', 'is_top_hit', 'p-value')
-  pcollection = data.frame('name' = 'gea_hits',
-                           'is_top_hit' = T,
-                           'matching' = F,
-                           'logP' = phenotype_two_fx %>% 
-                             filter(SNP %in% top_hits_clumped) %>% 
-                             pull(logP) %>% 
-                             mean(., na.rm = T))
-  for(j in 1:number_bootstraps){
-    pvalue = mean(phenotype_two_fx[which(SNP_matrix[[sprintf('bootstrap%d',j)]] == T),]$logP)
-    pcollection = rbind(pcollection, c(sprintf('bootstrap%d',j), F, T, pvalue))
-  }
-  
-  pcollection$is_top_hit = as.logical(pcollection$is_top_hit)
-  pcollection$matching = as.logical(pcollection$matching)
-  pcollection$logP = as.numeric(pcollection$logP)
-  # x = plotpValueSDFigure(pcollection, phenotype_name)
-  return(pcollection)
-}
-
-
-
 plotpValueSDManuscript = function(df) {
   ggplot(df %>% 
            filter(is_top_hit | matching) %>% arrange(is_top_hit), 
@@ -235,114 +208,6 @@ plotpValueSDManuscript = function(df) {
     guides(scale = 'none', size = 'none', color = guide_legend(override.aes = list(size = 6))) +
     ylim(0.25, 0.75)
   
-}
-
-
-
-manual_manhattan = function(results, highlight_SNP_list, chr_filter = NA, sig = 1e-5,
-                            chr_col = 'CHR', bp_col = 'BP', p_col = 'P', 
-                            title = 'Multivariate GEA'){
-  if(!is.na(chr_filter)) {
-    results = results %>% filter((!!sym(chr_col)) == chr_filter)
-  }
-  
-  max_BP <- results |>
-    group_by((!!sym(chr_col))) |>
-    summarise(max_bp = max((!!sym(bp_col)))) |>
-    mutate(bp_add = lag(cumsum(max_bp), default = 0)) |>
-    dplyr::select((!!sym(chr_col)), bp_add)
-  
-  results_add <- results |>
-    inner_join(max_BP, by = chr_col) |>
-    mutate(bp_cum = (!!sym(bp_col)) + bp_add)
-  
-  axis_set <- results_add |>
-    group_by((!!sym(chr_col))) |>
-    summarize(center = mean(bp_cum))
-  
-  ylim <- results_add |>
-    filter((!!sym(p_col)) == min((!!sym(p_col)))) |>
-    mutate(ylim = abs(floor(log10((!!sym(p_col))))) + 2) |>
-    pull(ylim)
-  
-  # sig <- 1e-5
-  
-  (manhplot <- ggplot(results_add, aes(
-    x = bp_cum, y = -log10((!!sym(p_col))),
-    color = as.factor((!!sym(chr_col))), size = -log10((!!sym(p_col)))
-  )) +
-      geom_hline(
-        yintercept = -log10(sig), color = "blue",
-        linetype = "dashed"
-      ) +
-      geom_point(alpha = 0.75, size = 0.5) +
-      scale_x_continuous(
-        label = axis_set %>% pull((!!sym(chr_col))),
-        breaks = axis_set$center
-      ) +
-      scale_y_continuous(expand = c(0, 0), limits = c(0, ylim)) +
-      scale_color_manual(values = rep(
-        c("grey4", "grey30"),
-        unique(length(axis_set %>% pull(!!sym(chr_col))))
-      )) +
-      geom_point(data = results_add[results_add$SNP %in% highlight_SNP_list,],
-                 alpha = 0.75, size = 0.75, color = 'red') + 
-      scale_size_continuous(range = c(0.5, 3)) +
-      labs(
-        x = NULL,
-        y = "-log<sub>10</sub>(p)"
-      ) +
-      theme_minimal() +
-      theme(
-        legend.position = "none",
-        panel.grid.major.x = element_blank(),
-        panel.grid.minor.x = element_blank(),
-        axis.title.y = element_markdown(),
-        axis.text.x = element_text(angle = 0, size = 10, vjust = 0.5)
-      ) +
-      ggtitle(title)
-  )
-  
-}
-
-
-sampleSNPs_maf = function(df, top_hits, number_bootstraps, gea = F) {
-  ### function that takes a Joint result from processJointresults and the top hits from envGWAS
-  ### and adds columns that identify top SNP hits as well as samples SNPs with matching maf
-  # create factor column from maf using cut (20 intervals in format [0, 0.025))
-  if(gea == F) {
-    df$maf_factor = cut(df$maf, breaks = seq(0, 0.50001, 0.025), include.lowest = T, right = F)
-  } else if(gea == T) {
-    df$maf_factor = cut(df$maf.gea, breaks = seq(0, 0.50001, 0.025), include.lowest = T, right = F)
-  }
-  df$is_top_hit = df$SNP %in% top_hits
-  
-  runs = data.frame(SNP = df$SNP)
-  
-  nested_df = df %>% 
-    # nest by maf interval factor
-    group_by(maf_factor) %>% 
-    nest() %>% 
-    ungroup() %>%
-    # create new column of just top hits
-    mutate(top_hits = map(data, ~filter(., is_top_hit))) %>% 
-    # calculate frequency of top hits
-    mutate(count = map_dbl(top_hits, nrow)) %>% 
-    # mutate(freq = round(count / sum(count), 3)) %>% 
-    # calculate new column of no top hits
-    mutate(non_top_hits = map(data, ~filter(., !is_top_hit)))
-  
-  for(i in 1:number_bootstraps){
-    bootstrap_SNPs = nested_df %>% 
-      # create new column by sampling non-top-hits using frequency of top hits
-      mutate(samp = map2(non_top_hits, count, sample_n)) %>% 
-      dplyr::select(samp) %>% 
-      unnest(samp) %>% 
-      pull(SNP)
-    runs[[sprintf('bootstrap%d', i)]] = F
-    runs[[sprintf('bootstrap%d', i)]][which(runs$SNP %in% bootstrap_SNPs)] = df[which(runs$SNP %in% bootstrap_SNPs), 'maf_factor']
-  }
-  return(runs)
 }
 
 ## function to obtains SE error bars for plotting
@@ -371,10 +236,79 @@ shift_legend <- function(p) {
   reposition_legend(p, 'center', panel=names)
 }
 
-all_labels = c('Top 5 PCs', 'Random SNPs + PCs', 'Top envGWAS SNPs + PCs', 'All SNPs', 'All SNPs + Climate',
-               'PCs + Climate', 'Climate data LMM', 'Climate data RF', 'Climate data + PCs RF', 'Unstructured SNPs', 'Unstructured SNPs + PCSs')
+## label names and colors for different models
+all_columns = c("lm_PC5", 'lm_matching_SNPs', 'lm_enriched_SNPs', 
+                'lm_all_SNPs', 'lm_all_SNPs_env',
+                'lm_PC5_env', 'lm_env', 'rf_env', 'rf_env_PC5',
+                'lm_unstructured_SNPs_only', 'lm_unstructured_SNPs', 'lm_unstructured_matching_SNPs_only', 'lm_unstructured_matching_SNPs')
 
-model_palette = c('#4F4C4D', '#6994dd', '#8db5f1', '#f9ea71', '#F9C343', '#E7601F','#F57F47', '#df8b8b', '#CE4646', '#702963', '#AA336A')
+all_labels = c('Top 5 PCs', 'Random SNPs + PCs', 'Top envGWAS SNPs + PCs', 
+               'All SNPs', 'All SNPs + Climate',
+               'PCs + Climate', 'Climate data LMM', 'Climate data RF', 'Climate data + PCs RF', 
+               'Uncorrected SNPs', 'Uncorrected SNPs + PCs', 'Matching uncorrected SNPs', 'Matching uncorrected SNPs + PCs')
+
+model_palette = c('#4F4C4D', '#6994dd', '#8db5f1', 
+                           '#f9ea71', '#F9C343', 
+                           '#E7601F','#F57F47', '#df8b8b', '#CE4646', 
+                           '#702963', '#AA336A', '#d02963', '#d00000')
+
+create_prediction_comparison_plot_byModel = function(blup_style, trait_i, columns) {
+  prediction_accuracy = read.csv(here(sprintf('Analyses/PhenotypicPrediction/%s/modelPrediction_nostress_%s_results_resid.csv', blup_style, trait_i)))
+  all_results = merge(prediction_accuracy, trial_master[c('Experimento', 'Localidad', 'Año', 'latitude', 'Trial_elevation', 'meanTemp', 'annualPrecipitation')])
+  all_results = all_results[order(all_results$Trial_elevation),]
+  all_results$name = paste(all_results$Localidad, all_results$Año)
+  all_results$name = factor(all_results$name, levels = all_results$name %>% unique())
+  
+  ## plot all models together for R predictive accuracy
+  all_results_long = pivot_longer(all_results, cols = columns, names_to = 'model')
+  all_results_long$model = factor(all_results_long$model, 
+                                  levels = columns, ordered = TRUE)
+  ## shorten gwph name for brevity
+  if(trait_i == 'GrainWeightPerHectareCorrected')
+    trait_i = 'GrainWeight'
+  plot_byModel = ggplot(all_results_long, 
+                      aes(x = model, y = value, fill = model)) +
+    stat_summary(fun = mean, geom = 'bar') +
+    stat_summary(fun.data = getSEs, geom = 'errorbar', width = 0.1) +
+    # geom_jitter(aes(x = model, y = value), size = 0.1, height = 0, width = 0.1) +
+    # facet_wrap(facets = 'Experimento') +
+    ylab('Pearson correlation (r)') +
+    theme(axis.ticks.x=element_blank(), axis.text.x = element_blank(), axis.title.x = element_blank()) +
+    theme_bw() +
+    scale_fill_manual(values = model_palette[which(all_columns %in% columns)], labels = all_labels[which(all_columns %in% columns)]) +
+    ylim(c(0, 0.4)) +
+    ggtitle(sprintf('%s', gsub("([[:lower:]])([[:upper:]])", "\\1 \\2", trait_i)))
+  plot_byModel
+}
+
+create_prediction_comparison_plot_byTrial = function(blup_style, trait_i, columns) {
+  prediction_accuracy = read.csv(here(sprintf('Analyses/PhenotypicPrediction/%s/modelPrediction_nostress_%s_results_resid.csv', blup_style, trait_i)))
+  all_results = merge(prediction_accuracy, trial_master[c('Experimento', 'Localidad', 'Año', 'latitude', 'Trial_elevation', 'meanTemp', 'annualPrecipitation')])
+  all_results = all_results[order(all_results$Trial_elevation),]
+  all_results$name = paste(all_results$Localidad, all_results$Año)
+  all_results$name = factor(all_results$name, levels = all_results$name %>% unique())
+  
+  ## plot all models together for R predictive accuracy
+  all_results_long = pivot_longer(all_results, cols = columns, names_to = 'model')
+  all_results_long$model = factor(all_results_long$model, 
+                                  levels = columns, ordered = TRUE)
+  ## shorten gwph name for brevity
+  if(trait_i == 'GrainWeightPerHectareCorrected')
+    trait_i = 'GrainWeight'
+  plot_byModel = ggplot(all_results_long, 
+                        aes(x = model, y = value, fill = model)) +
+    stat_summary(fun = mean, geom = 'bar') +
+    stat_summary(fun.data = getSEs, geom = 'errorbar', width = 0.1) +
+    geom_jitter(aes(x = model, y = value), size = 0.1, height = 0, width = 0.1) +
+    facet_wrap(facets = 'Experimento') +
+    ylab('Pearson correlation (r)') +
+    theme_bw() +
+    theme(axis.ticks.x=element_blank(), axis.text.x = element_blank(), axis.title.x = element_blank()) +
+    scale_fill_manual(values = model_palette[which(all_columns %in% columns)], labels = all_labels[which(all_columns %in% columns)]) +
+    ylim(c(0, 0.4)) +
+    ggtitle(sprintf('%s', gsub("([[:lower:]])([[:upper:]])", "\\1 \\2", trait_i)))
+  plot_byModel
+}
 
 rotation_hjust = function(angle) {
   rads = (angle - 0) * pi / 180
